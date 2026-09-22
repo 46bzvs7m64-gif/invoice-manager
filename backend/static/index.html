@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>发票管家</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.7.6/dist/index.css">
+<script src="https://cdn.jsdelivr.net/npm/vue@3.4.31/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/element-plus@2.7.6/dist/index.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/element-plus@2.7.6/dist/locale/zh-cn.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios@1.7.2/dist/axios.min.js"></script>
+<style>
+  body{margin:0;background:#f5f7fa;font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  .brand-header{background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:56px}
+  .brand-title{font-size:18px;font-weight:700}
+  .brand-sub{font-size:12px;opacity:.85}
+  .page-card{max-width:1200px;margin:0 auto}
+  .sync-log{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:12px;font-size:12px;line-height:1.7;height:260px;overflow-y:auto;font-family:Consolas,monospace;white-space:pre-wrap;margin:10px 0 0}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0}
+  .stat-item{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;text-align:center}
+  .stat-item b{display:block;font-size:22px;color:#1e293b}
+  .stat-item span{font-size:12px;color:#64748b}
+  .money{color:#dc2626;font-weight:700}
+  .filter-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:14px}
+  .group-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%;font-size:14px}
+  .group-title .g-name{font-weight:700;color:#1e293b;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .g-amt{color:#dc2626;font-weight:700}
+  .sub-table .cell{font-size:13px}
+  .chart-title{font-size:14px;font-weight:700;color:#1e293b;margin:8px 0 12px}
+  .bar-chart{display:flex;align-items:flex-end;gap:16px;height:200px;padding:0 8px}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .bar-track{width:34px;flex:1;display:flex;align-items:flex-end}
+  .bar{width:100%;background:linear-gradient(180deg,#3b82f6,#2563eb);border-radius:4px 4px 0 0;min-height:2px}
+  .bar-val{font-size:11px;color:#64748b;margin-bottom:4px;white-space:nowrap}
+  .bar-label{font-size:12px;color:#64748b;margin-top:6px}
+  .hs-row{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+  .hs-name{width:150px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1e293b}
+  .hs-track{flex:1;height:14px;background:#f1f5f9;border-radius:7px;overflow:hidden}
+  .hs-bar{height:100%;background:linear-gradient(90deg,#60a5fa,#2563eb);border-radius:7px}
+  .hs-amt{width:126px;font-size:12px;color:#64748b;text-align:right;white-space:nowrap}
+  @media (max-width:640px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+  .mb12{margin-bottom:12px}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .mt12{margin-top:12px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="brand-header">
+    <div>
+      <div class="brand-title">发票管家</div>
+      <div class="brand-sub">邮箱采集 · 智能识别 · 归类检索</div>
+    </div>
+  </header>
+
+  <el-main class="page-card">
+    <el-tabs v-model="tab">
+
+      <!-- ========== 仪表盘 ========== -->
+      <el-tab-pane label="仪表盘" name="dash">
+        <el-card>
+          <div class="toolbar" style="margin-bottom:16px">
+            <el-button type="primary" @click="tab='sync'">一键采集</el-button>
+            <el-button type="success" plain @click="tab='invoices'">检索发票</el-button>
+            <el-button text type="primary" @click="loadDash">刷新统计</el-button>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-item"><b>{{ dash.total_count }}</b><span>发票总数</span></div>
+            <div class="stat-item"><b class="money">¥{{ dash.total_amount }}</b><span>总金额</span></div>
+            <div class="stat-item"><b style="color:#2563eb">{{ dash.unused_count }}</b><span>未使用张数</span></div>
+            <div class="stat-item"><b class="money">¥{{ dash.unused_amount }}</b><span>未使用金额</span></div>
+          </div>
+          <el-row :gutter="12">
+            <el-col :xs="24" :md="12" class="mt12">
+              <div class="chart-title">近 6 个月发票金额趋势（按开票日期）</div>
+              <div class="bar-chart" v-if="dash.monthly.length">
+                <div class="bar-col" v-for="m in dash.monthly" :key="m.month">
+                  <div class="bar-val">{{ m.amount ? '¥' + m.amount : '' }}</div>
+                  <div class="bar-track"><div class="bar" :style="{ height: barH(m.amount) }"></div></div>
+                  <div class="bar-label">{{ m.month.slice(5) }}月</div>
+                </div>
+              </div>
+            </el-col>
+            <el-col :xs="24" :md="12" class="mt12">
+              <div class="chart-title">开票对象 TOP5（按金额）</div>
+              <template v-if="dash.top_sellers.length">
+                <div class="hs-row" v-for="s in dash.top_sellers" :key="s.name">
+                  <span class="hs-name" :title="s.name">{{ s.name }}</span>
+                  <div class="hs-track"><div class="hs-bar" :style="{ width: hsW(s.amount) }"></div></div>
+                  <span class="hs-amt">¥{{ s.amount }} · {{ s.count }}张</span>
+                </div>
+              </template>
+              <el-empty v-else description="暂无已识别发票" :image-size="60"></el-empty>
+            </el-col>
+          </el-row>
+        </el-card>
+        <el-card class="mt12">
+          <template #header>最近采集</template>
+          <el-empty v-if="!dash.recent.length" description="还没有发票，点击上方「一键采集」开始" :image-size="70"></el-empty>
+          <el-table v-else :data="dash.recent" size="small">
+            <el-table-column prop="invoice_date" label="开票日期" width="105"></el-table-column>
+            <el-table-column prop="seller_name" label="销售方" min-width="160" show-overflow-tooltip></el-table-column>
+            <el-table-column label="金额" width="95">
+              <template #default="s"><span class="money">¥{{ s.row.amount_total ?? '—' }}</span></template>
+            </el-table-column>
+            <el-table-column label="状态" width="80">
+              <template #default="s">
+                <el-tag size="small" :type="s.row.status==='used'?'info':'success'">{{ s.row.status==='used'?'已使用':'未使用' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="created_at" label="采集时间" width="140"></el-table-column>
+          </el-table>
+        </el-card>
+      </el-tab-pane>
+
+      <!-- ========== 邮箱配置 ========== -->
+      <el-tab-pane label="邮箱配置" name="email">
+        <el-card>
+          <el-alert type="info" :closable="false" class="mb12"
+            title="首次使用：请先在邮箱网页版开启 IMAP 服务并生成授权码（不是登录密码）"></el-alert>
+          <el-form label-width="110px" style="max-width:600px">
+            <el-form-item label="快速填充">
+              <el-button size="small" @click="quickFill('qq')">QQ 邮箱</el-button>
+              <el-button size="small" @click="quickFill('163')">163 邮箱</el-button>
+            </el-form-item>
+            <el-form-item label="邮箱地址" required>
+              <el-input v-model="acc.email" placeholder="yourmail@qq.com"></el-input>
+            </el-form-item>
+            <el-form-item label="IMAP 服务器" required>
+              <el-input v-model="acc.imap_host" placeholder="imap.qq.com"></el-input>
+            </el-form-item>
+            <el-form-item label="端口">
+              <el-input-number v-model="acc.imap_port" :min="1" :max="65535"></el-input-number>
+              <el-checkbox v-model="acc.use_ssl" style="margin-left:16px">SSL</el-checkbox>
+            </el-form-item>
+            <el-form-item label="授权码" :required="!acc.id">
+              <el-input v-model="acc.auth_code" type="password" show-password
+                :placeholder="acc.id ? '已保存，留空表示不修改' : '在邮箱设置中开启 IMAP 并生成授权码'"></el-input>
+            </el-form-item>
+            <el-form-item label="发件人白名单">
+              <el-input v-model="acc.sender_whitelist" placeholder="选填，逗号分隔域名，如 sinopec.com,didi.com"></el-input>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" :loading="saving" @click="saveEmail">保存配置</el-button>
+              <el-button :loading="testing" @click="testEmail">测试连接</el-button>
+              <el-button v-if="acc.id" type="danger" plain @click="delEmail">删除配置</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+      </el-tab-pane>
+
+      <!-- ========== 发票采集 ========== -->
+      <el-tab-pane label="发票采集" name="sync">
+        <el-card>
+          <div class="toolbar">
+            <span>采集最近</span>
+            <el-input-number v-model="sync.days" :min="1" :max="365"></el-input-number>
+            <span>天的邮件</span>
+            <el-button type="primary" :loading="sync.running" :disabled="sync.running" @click="startSync">一键采集</el-button>
+          </div>
+          <template v-if="sync.taskId">
+            <div class="stat-grid">
+              <div class="stat-item"><b>{{ sync.st.scanned }}</b><span>扫描邮件</span></div>
+              <div class="stat-item"><b>{{ sync.st.found }}</b><span>命中候选</span></div>
+              <div class="stat-item"><b>{{ sync.st.downloaded }}</b><span>已下载发票</span></div>
+              <div class="stat-item"><b>{{ sync.st.skipped }}</b><span>跳过</span></div>
+            </div>
+            <div class="toolbar" style="margin-bottom:0">
+              <el-tag v-if="sync.st.status==='running'" type="primary">采集中…</el-tag>
+              <el-tag v-else-if="sync.st.status==='done'" type="success">采集完成</el-tag>
+              <el-tag v-else-if="sync.st.status==='error'" type="danger">采集出错</el-tag>
+            </div>
+            <pre class="sync-log">{{ sync.st.lines.join('\n') }}</pre>
+          </template>
+        </el-card>
+        <el-card class="mt12">
+          <template #header>手动上传发票</template>
+          <el-upload
+            drag multiple
+            action="/api/invoices/upload"
+            name="file"
+            accept=".pdf,.ofd"
+            :before-upload="beforeUpload"
+            :on-success="onUploadOk"
+            :on-error="onUploadErr">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="margin:6px 0">
+              <path d="M12 15V4m0 0l-4 4m4-4l4 4"/>
+              <path d="M4 14v3a3 3 0 003 3h10a3 3 0 003-3v-3"/>
+            </svg>
+            <div class="el-upload__text">将 PDF / OFD 发票拖到此处，或<em>点击选择</em></div>
+            <template #tip>
+              <div class="el-upload__tip">支持一次选择多个文件，单文件不超过 20MB；重复文件会自动跳过；上传完成后到「智能识别」页统一识别</div>
+            </template>
+          </el-upload>
+        </el-card>
+        <el-card class="mt12">
+          <template #header>历史采集记录</template>
+          <el-table :data="sync.logs" size="small">
+            <el-table-column prop="started_at" label="开始时间" width="160"></el-table-column>
+            <el-table-column prop="total_scanned" label="扫描" width="70"></el-table-column>
+            <el-table-column prop="invoices_found" label="候选" width="70"></el-table-column>
+            <el-table-column prop="invoices_downloaded" label="下载" width="70"></el-table-column>
+            <el-table-column prop="invoices_skipped" label="跳过" width="70"></el-table-column>
+            <el-table-column prop="invoices_failed" label="失败" width="70"></el-table-column>
+          </el-table>
+        </el-card>
+      </el-tab-pane>
+
+      <!-- ========== 智能识别 ========== -->
+      <el-tab-pane label="智能识别" name="ocr">
+        <el-card>
+          <el-alert type="warning" :closable="false" class="mb12"
+            title="识别需要百炼 API Key：请在 backend/.env 中填写 QWEN_API_KEY 并重启服务；OFD 发票暂不支持自动识别，可在列表中手动录入"></el-alert>
+          <div class="toolbar">
+            <span>识别范围</span>
+            <el-radio-group v-model="ocr.scope">
+              <el-radio-button label="pending">待识别</el-radio-button>
+              <el-radio-button label="failed">识别失败</el-radio-button>
+              <el-radio-button label="all">全部重新识别</el-radio-button>
+            </el-radio-group>
+            <el-button type="primary" :loading="ocr.running" :disabled="ocr.running" @click="startOcr">开始识别</el-button>
+          </div>
+          <template v-if="ocr.taskId">
+            <div class="stat-grid">
+              <div class="stat-item"><b>{{ ocr.st.total || 0 }}</b><span>待识别总数</span></div>
+              <div class="stat-item"><b class="money">{{ ocr.st.success || 0 }}</b><span>识别成功</span></div>
+              <div class="stat-item"><b style="color:#dc2626">{{ ocr.st.failed || 0 }}</b><span>识别失败</span></div>
+              <div class="stat-item" style="overflow:hidden">
+                <span style="font-size:11px">{{ ocr.st.current || '—' }}</span><span>当前进度</span></div>
+            </div>
+            <div class="toolbar" style="margin-bottom:0">
+              <el-tag v-if="ocr.st.status==='running'" type="primary">识别中…</el-tag>
+              <el-tag v-else-if="ocr.st.status==='done'" type="success">识别完成</el-tag>
+              <el-tag v-else-if="ocr.st.status==='error'" type="danger">识别出错</el-tag>
+            </div>
+            <pre class="sync-log">{{ (ocr.st.lines || []).join('\n') }}</pre>
+          </template>
+        </el-card>
+      </el-tab-pane>
+
+      <!-- ========== 归类视图 ========== -->
+      <el-tab-pane label="归类视图" name="groups">
+        <el-card>
+          <div class="toolbar">
+            <el-radio-group v-model="grp.dim" @change="loadGroups">
+              <el-radio-button label="sellers">按销售方</el-radio-button>
+              <el-radio-button label="buyers">按购买方</el-radio-button>
+            </el-radio-group>
+            <el-select v-model="grp.status" style="width:130px" @change="loadGroups">
+              <el-option label="全部状态" value="all"></el-option>
+              <el-option label="未使用" value="unused"></el-option>
+              <el-option label="已使用" value="used"></el-option>
+            </el-select>
+            <span style="color:#94a3b8;font-size:12px">共 {{ grp.data.length }} 个开票对象，点击展开查看组内发票</span>
+          </div>
+
+          <el-empty v-if="!grp.data.length" description="暂无可归类的发票，请先完成采集与识别"></el-empty>
+
+          <el-collapse v-else v-model="grp.active">
+            <el-collapse-item v-for="g in grp.data" :key="g.name" :name="g.name">
+              <template #title>
+                <span class="group-title" @click.stop>
+                  <span class="g-name">{{ g.name }}</span>
+                  <el-tag size="small" type="primary">{{ g.count }} 张</el-tag>
+                  <span class="g-amt">¥{{ g.amount_total }}</span>
+                  <span style="color:#94a3b8;font-size:12px">{{ g.date_min || '?' }} ~ {{ g.date_max || '?' }}</span>
+                </span>
+              </template>
+              <el-table :data="g.invoices" size="small" class="sub-table">
+                <el-table-column prop="invoice_date" label="开票日期" width="105"></el-table-column>
+                <el-table-column prop="invoice_no" label="发票号码" min-width="150" show-overflow-tooltip></el-table-column>
+                <el-table-column label="金额" width="95">
+                  <template #default="s"><span class="money">¥{{ s.row.amount_total }}</span></template>
+                </el-table-column>
+                <el-table-column label="状态" width="80">
+                  <template #default="s">
+                    <el-tag size="small" :type="s.row.status==='used'?'info':'success'">
+                      {{ s.row.status==='used'?'已使用':'未使用' }}</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="170">
+                  <template #default="s">
+                    <el-button link type="primary" @click="openPreview(s.row)">预览</el-button>
+                    <el-button v-if="s.row.status!=='used'" link type="warning" @click="markUsed(s.row)">标记</el-button>
+                    <el-button v-else link type="success" @click="unmarkUsed(s.row)">撤销</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </el-collapse-item>
+          </el-collapse>
+        </el-card>
+      </el-tab-pane>
+
+      <!-- ========== 发票列表 ========== -->
+      <el-tab-pane label="发票列表" name="invoices">
+        <!-- 多条件筛选器 -->
+        <div class="filter-box">
+          <el-row :gutter="12">
+            <el-col :xs="24" :sm="12" :md="8" class="mb12">
+              <el-select v-model="flt.seller" filterable clearable placeholder="销售方（开票对象）" style="width:100%">
+                <el-option v-for="s in opts.sellers" :key="s" :label="s" :value="s"></el-option>
+              </el-select>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="mb12">
+              <el-select v-model="flt.buyer" filterable clearable placeholder="购买方（发票抬头）" style="width:100%">
+                <el-option v-for="b in opts.buyers" :key="b" :label="b" :value="b"></el-option>
+              </el-select>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="mb12">
+              <el-date-picker v-model="flt.dateRange" type="daterange" range-separator="至"
+                start-placeholder="开始日期" end-placeholder="结束日期"
+                value-format="YYYY-MM-DD" style="width:100%"></el-date-picker>
+            </el-col>
+            <el-col :xs="12" :sm="6" :md="4" class="mb12">
+              <el-input-number v-model="flt.amountMin" :min="0" :precision="2" placeholder="最小金额"
+                controls-position="right" style="width:100%"></el-input-number>
+            </el-col>
+            <el-col :xs="12" :sm="6" :md="4" class="mb12">
+              <el-input-number v-model="flt.amountMax" :min="0" :precision="2" placeholder="最大金额"
+                controls-position="right" style="width:100%"></el-input-number>
+            </el-col>
+            <el-col :xs="12" :sm="6" :md="4" class="mb12">
+              <el-select v-model="flt.invoiceType" clearable placeholder="发票类型" style="width:100%">
+                <el-option v-for="t in opts.types" :key="t" :label="t" :value="t"></el-option>
+              </el-select>
+            </el-col>
+            <el-col :xs="12" :sm="6" :md="4" class="mb12">
+              <el-select v-model="flt.category" clearable placeholder="类目" style="width:100%">
+                <el-option v-for="c in opts.categories" :key="c" :label="c" :value="c"></el-option>
+              </el-select>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="mb12">
+              <el-input v-model="flt.keyword" placeholder="关键词：发票号 / 文件名" clearable
+                @keyup.enter="searchInvoices"></el-input>
+            </el-col>
+          </el-row>
+          <div class="toolbar" style="margin-bottom:0">
+            <el-select v-model="flt.status" style="width:115px">
+              <el-option label="未使用" value="unused"></el-option>
+              <el-option label="全部状态" value="all"></el-option>
+              <el-option label="已使用" value="used"></el-option>
+            </el-select>
+            <span>排序</span>
+            <el-select v-model="flt.sort" style="width:105px">
+              <el-option label="开票日期" value="date"></el-option>
+              <el-option label="金额" value="amount"></el-option>
+            </el-select>
+            <el-radio-group v-model="flt.order">
+              <el-radio-button label="desc">降序</el-radio-button>
+              <el-radio-button label="asc">升序</el-radio-button>
+            </el-radio-group>
+            <el-button type="primary" @click="searchInvoices">查询</el-button>
+            <el-button @click="resetFilter">重置</el-button>
+          </div>
+        </div>
+
+        <el-card>
+          <div class="toolbar" style="margin-bottom:10px">
+            <el-button type="warning" :disabled="!selIds.length" @click="batchUse">
+              批量标记已使用（{{ selIds.length }}）</el-button>
+            <el-button type="success" @click="exportInvoices">导出报销单</el-button>
+            <el-button type="success" plain @click="loadInvoices">刷新</el-button>
+            <span style="margin-left:auto;font-size:13px;color:#64748b">
+              共 <b>{{ inv.total }}</b> 条，当前结果金额合计
+              <b class="money" style="font-size:15px">¥{{ inv.matchedAmount || 0 }}</b></span>
+          </div>
+          <el-table :data="inv.rows" v-loading="inv.loading" size="small"
+            @selection-change="onSelChange" max-height="620">
+            <el-table-column type="selection" width="42"></el-table-column>
+            <el-table-column prop="invoice_date" label="开票日期" width="100"></el-table-column>
+            <el-table-column prop="seller_name" label="销售方" min-width="150" show-overflow-tooltip></el-table-column>
+            <el-table-column label="金额" width="95">
+              <template #default="s"><span class="money">¥{{ s.row.amount_total ?? '—' }}</span></template>
+            </el-table-column>
+            <el-table-column prop="invoice_no" label="发票号码" min-width="145" show-overflow-tooltip></el-table-column>
+            <el-table-column prop="buyer_name" label="购买方" min-width="130" show-overflow-tooltip></el-table-column>
+            <el-table-column prop="category" label="类目" width="70"></el-table-column>
+            <el-table-column label="状态" width="76">
+              <template #default="s">
+                <el-tag size="small" :type="s.row.status==='used'?'info':''">
+                  {{ s.row.status==='used'?'已使用':'未使用' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="235" fixed="right">
+              <template #default="s">
+                <el-button link type="primary" @click="openPreview(s.row)">预览</el-button>
+                <el-button link type="primary" @click="openEdit(s.row)">编辑</el-button>
+                <el-button v-if="s.row.status!=='used'" link type="warning" @click="markUsed(s.row)">标记</el-button>
+                <el-button v-else link type="success" @click="unmarkUsed(s.row)">撤销</el-button>
+                <el-button link type="danger" @click="delInvoice(s.row)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-pagination class="mt12" layout="prev, pager, next, total"
+            :total="inv.total" :page-size="inv.pageSize"
+            v-model:current-page="flt.page" @current-change="loadInvoices"></el-pagination>
+        </el-card>
+      </el-tab-pane>
+
+    </el-tabs>
+
+    <!-- ========== 编辑发票弹窗 ========== -->
+    <el-dialog v-model="edit.visible" title="编辑发票信息" width="560px">
+      <el-form :model="edit.form" label-width="100px">
+        <el-form-item label="发票号码"><el-input v-model="edit.form.invoice_no"></el-input></el-form-item>
+        <el-form-item label="发票类型"><el-input v-model="edit.form.invoice_type"></el-input></el-form-item>
+        <el-form-item label="开票日期"><el-date-picker v-model="edit.form.invoice_date" type="date" value-format="YYYY-MM-DD" style="width:100%"></el-date-picker></el-form-item>
+        <el-form-item label="价税合计"><el-input-number v-model="edit.form.amount_total" :min="0" :precision="2" controls-position="right" style="width:100%"></el-input-number></el-form-item>
+        <el-form-item label="不含税金额"><el-input-number v-model="edit.form.amount_without_tax" :min="0" :precision="2" controls-position="right" style="width:100%"></el-input-number></el-form-item>
+        <el-form-item label="税额"><el-input-number v-model="edit.form.tax_amount" :min="0" :precision="2" controls-position="right" style="width:100%"></el-input-number></el-form-item>
+        <el-form-item label="销售方名称"><el-input v-model="edit.form.seller_name"></el-input></el-form-item>
+        <el-form-item label="销售方税号"><el-input v-model="edit.form.seller_tax_no"></el-input></el-form-item>
+        <el-form-item label="购买方名称"><el-input v-model="edit.form.buyer_name"></el-input></el-form-item>
+        <el-form-item label="购买方税号"><el-input v-model="edit.form.buyer_tax_no"></el-input></el-form-item>
+        <el-form-item label="消费类目"><el-input v-model="edit.form.category" placeholder="餐饮/交通/住宿/购物/加油/通讯/其他"></el-input></el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="edit.visible=false">取消</el-button>
+        <el-button type="primary" :loading="edit.saving" @click="saveEdit">保存</el-button>
+      </template>
+    </el-dialog>
+  </el-main>
+</div>
+
+<script>
+const { createApp, reactive, ref, onMounted } = Vue;
+const { ElMessage, ElMessageBox, ElNotification } = ElementPlus;
+
+axios.interceptors.response.use(r => r, err => {
+  const d = err.response && err.response.data;
+  const msg = (d && (typeof d.detail === 'string' ? d.detail : JSON.stringify(d.detail))) || err.message;
+  ElMessage.error(msg);
+  return Promise.reject(err);
+});
+
+const app = createApp({
+  setup() {
+    const tab = ref('dash');
+
+    /* ---------- 邮箱配置 ---------- */
+    const acc = reactive({ id: null, email: '', imap_host: '', imap_port: 993, use_ssl: true, auth_code: '', sender_whitelist: '' });
+    const saving = ref(false), testing = ref(false);
+    const quickFill = (t) => {
+      if (t === 'qq') { acc.imap_host = 'imap.qq.com'; acc.imap_port = 993; acc.use_ssl = true; }
+      else { acc.imap_host = 'imap.163.com'; acc.imap_port = 993; acc.use_ssl = true; }
+    };
+    const loadEmail = async () => {
+      const list = (await axios.get('/api/email')).data;
+      if (list.length) Object.assign(acc, list[0], { auth_code: '' });
+    };
+    const saveEmail = async () => {
+      if (!acc.email || !acc.imap_host || (!acc.auth_code && !acc.id)) {
+        ElMessage.warning('请填写邮箱地址、IMAP 服务器和授权码'); return;
+      }
+      saving.value = true;
+      try {
+        const r = (await axios.post('/api/email', acc)).data;
+        ElMessage.success(r.message); acc.auth_code = '';
+        await loadEmail();
+      } finally { saving.value = false; }
+    };
+    const testEmail = async () => {
+      if (!acc.email || !acc.imap_host) { ElMessage.warning('请填写邮箱地址和 IMAP 服务器'); return; }
+      testing.value = true;
+      try {
+        const r = (await axios.post('/api/email/test', acc)).data;
+        r.ok ? ElMessage.success(r.message) : ElMessage.error(r.message);
+      } finally { testing.value = false; }
+    };
+    const delEmail = async () => {
+      try { await ElMessageBox.confirm('确定删除该邮箱配置吗？已下载的发票文件不受影响。', '删除确认', { type: 'warning' }); }
+      catch (e) { return; }
+      await axios.delete('/api/email/' + acc.id);
+      Object.assign(acc, { id: null, email: '', imap_host: '', imap_port: 993, use_ssl: true, auth_code: '', sender_whitelist: '' });
+      ElMessage.success('已删除');
+    };
+
+    /* ---------- 发票采集 ---------- */
+    const sync = reactive({
+      days: 90, taskId: null, running: false, timer: null, logs: [],
+      st: { status: '', scanned: 0, found: 0, downloaded: 0, skipped: 0, failed: 0, lines: [] }
+    });
+    const startSync = async () => {
+      const r = (await axios.post('/api/sync/start', { days: sync.days })).data;
+      sync.taskId = r.task_id; sync.running = true;
+      sync.st = { status: 'running', scanned: 0, found: 0, downloaded: 0, skipped: 0, failed: 0, lines: [] };
+      ElMessage.info('采集任务已启动');
+      sync.timer = setInterval(pollSync, 1200);
+    };
+    const pollSync = async () => {
+      if (!sync.taskId) return;
+      const st = (await axios.get('/api/sync/status/' + sync.taskId)).data;
+      sync.st = st;
+      await Vue.nextTick();
+      const boxes = document.querySelectorAll('.sync-log');
+      const box = boxes[0];
+      if (box) box.scrollTop = box.scrollHeight;
+      if (st.status !== 'running') {
+        clearInterval(sync.timer); sync.running = false;
+        loadLogs(); loadInvoices(); loadOptions();
+        if (st.status === 'done') ElNotification.success({ title: '采集完成', message: '扫描 ' + st.scanned + ' 封邮件，下载发票 ' + st.downloaded + ' 张' });
+      }
+    };
+    const loadLogs = async () => { sync.logs = (await axios.get('/api/sync/logs')).data; };
+
+    /* ---------- 手动上传 ---------- */
+    const beforeUpload = (file) => {
+      const n = file.name.toLowerCase();
+      if (!(n.endsWith('.pdf') || n.endsWith('.ofd'))) {
+        ElMessage.error(file.name + '：仅支持 PDF / OFD 格式');
+        return false;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        ElMessage.error(file.name + '：文件超过 20MB 上限');
+        return false;
+      }
+      return true;
+    };
+    const onUploadOk = (resp, file) => {
+      ElMessage.success(file.name + '：上传成功');
+      loadInvoices(); loadOptions(); loadDash();
+    };
+    const onUploadErr = (err, file) => {
+      // err.message 为服务端返回的 JSON 原文
+      let msg = '上传失败';
+      try { const d = JSON.parse(err.message); if (d.detail) msg = d.detail; } catch (e) {}
+      ElMessage.error(file.name + '：' + msg);
+    };
+
+    /* ---------- 智能识别 ---------- */
+    const ocr = reactive({
+      scope: 'pending', taskId: null, running: false, timer: null,
+      st: { status: '', total: 0, success: 0, failed: 0, current: '', lines: [] }
+    });
+    const startOcr = async () => {
+      const r = (await axios.post('/api/ocr/start', null, { params: { scope: ocr.scope } })).data;
+      ocr.taskId = r.task_id; ocr.running = true;
+      ocr.st = { status: 'running', total: 0, success: 0, failed: 0, current: '', lines: [] };
+      ElMessage.info('识别任务已启动');
+      ocr.timer = setInterval(pollOcr, 1500);
+    };
+    const pollOcr = async () => {
+      if (!ocr.taskId) return;
+      const st = (await axios.get('/api/ocr/status/' + ocr.taskId)).data;
+      ocr.st = st;
+      await Vue.nextTick();
+      const boxes = document.querySelectorAll('.sync-log');
+      const box = boxes[boxes.length - 1];
+      if (box) box.scrollTop = box.scrollHeight;
+      if (st.status !== 'running') {
+        clearInterval(ocr.timer); ocr.running = false;
+        loadInvoices(); loadOptions();
+        if (st.status === 'done') ElNotification.success({ title: '识别完成', message: '成功 ' + (st.success || 0) + ' 张，失败 ' + (st.failed || 0) + ' 张' });
+      }
+    };
+
+    /* ---------- 筛选项数据 ---------- */
+    const opts = reactive({ sellers: [], buyers: [], types: [], categories: [] });
+    const loadOptions = async () => { Object.assign(opts, (await axios.get('/api/groups/options')).data); };
+
+    /* ---------- 发票列表筛选 ---------- */
+    const defaultFlt = () => ({
+      seller: '', buyer: '', dateRange: [], amountMin: null, amountMax: null,
+      invoiceType: '', category: '', keyword: '',
+      status: 'unused', sort: 'date', order: 'desc', page: 1
+    });
+    const flt = reactive(defaultFlt());
+    const inv = reactive({ total: 0, matchedAmount: 0, rows: [], loading: false, pageSize: 20 });
+    const selIds = ref([]);
+
+    const buildParams = () => ({
+      status: flt.status, seller: flt.seller, buyer: flt.buyer,
+      date_from: flt.dateRange?.[0] || '', date_to: flt.dateRange?.[1] || '',
+      amount_min: flt.amountMin, amount_max: flt.amountMax,
+      invoice_type: flt.invoiceType, category: flt.category,
+      keyword: flt.keyword, sort: flt.sort, order: flt.order,
+      page: flt.page, page_size: inv.pageSize
+    });
+    const loadInvoices = async () => {
+      inv.loading = true;
+      try {
+        const r = (await axios.get('/api/invoices', { params: buildParams() })).data;
+        inv.total = r.total; inv.rows = r.rows; inv.matchedAmount = r.matched_amount;
+      } finally { inv.loading = false; }
+    };
+    const searchInvoices = () => { flt.page = 1; loadInvoices(); };
+    const resetFilter = () => { Object.assign(flt, defaultFlt()); loadInvoices(); };
+    const onSelChange = (rows) => { selIds.value = rows.map(r => r.id); };
+
+    /* ---------- 标记使用 ---------- */
+    const askRemark = async () => {
+      try {
+        const r = await ElMessageBox.prompt('可填写使用备注（如报销单号），不需要可直接确定', '标记发票为已使用', {
+          confirmButtonText: '确定', cancelButtonText: '取消', inputValue: ''
+        });
+        return r.value || '';
+      } catch (e) { return null; }
+    };
+    const markUsed = async (row) => {
+      const remark = await askRemark();
+      if (remark === null) return;
+      await axios.post('/api/invoices/' + row.id + '/use', { remark });
+      ElMessage.success('已标记为已使用');
+      afterUse();
+    };
+    const unmarkUsed = async (row) => {
+      await axios.post('/api/invoices/' + row.id + '/unuse');
+      ElMessage.success('已恢复为未使用');
+      afterUse();
+    };
+    const batchUse = async () => {
+      const remark = await askRemark();
+      if (remark === null) return;
+      const r = (await axios.post('/api/invoices/batch-use', { ids: selIds.value, remark })).data;
+      ElMessage.success(r.message);
+      afterUse();
+    };
+    // 标记后同时刷新列表、归类视图和筛选项
+    const afterUse = () => { loadInvoices(); loadOptions(); if (grp.data.length) loadGroups(); loadDash(); };
+
+    /* ---------- 仪表盘 ---------- */
+    const dash = reactive({ total_count: 0, total_amount: 0, unused_count: 0, unused_amount: 0, monthly: [], top_sellers: [], recent: [] });
+    const loadDash = async () => { Object.assign(dash, (await axios.get('/api/dashboard')).data); };
+    const barH = (amt) => {
+      const max = Math.max(...dash.monthly.map(m => m.amount || 0), 1);
+      return Math.max(2, Math.round((amt || 0) / max * 140)) + 'px';
+    };
+    const hsW = (amt) => {
+      const max = Math.max(...dash.top_sellers.map(s => s.amount || 0), 1);
+      return Math.max(4, Math.round((amt || 0) / max * 100)) + '%';
+    };
+
+    /* ---------- 导出报销单 ---------- */
+    const exportInvoices = async () => {
+      let markUsed = false;
+      try {
+        await ElMessageBox.confirm(
+          '将按当前筛选条件导出 Excel 报销单。是否同时把这些发票标记为已使用？',
+          '导出报销单',
+          { confirmButtonText: '导出并标记已使用', cancelButtonText: '仅导出不标记', distinguishCancelAndClose: true, type: 'info' }
+        );
+        markUsed = true;
+      } catch (act) {
+        if (act === 'close' || act === undefined) return; // 右上角关闭 → 取消
+      }
+      const p = buildParams();
+      const qs = new URLSearchParams();
+      Object.entries(p).forEach(([k, v]) => {
+        if (v !== null && v !== undefined && v !== '' && k !== 'page' && k !== 'page_size') qs.append(k, v);
+      });
+      if (markUsed) qs.append('mark_used', '1');
+      window.location.href = '/api/invoices/export?' + qs.toString();
+      ElMessage.success(markUsed ? '报销单已生成下载，发票已标记为已使用' : '报销单已生成下载');
+      setTimeout(() => { loadInvoices(); loadDash(); }, 800);
+    };
+
+    /* ---------- 归类视图 ---------- */
+    const grp = reactive({ dim: 'sellers', status: 'all', data: [], active: [] });
+    const loadGroups = async () => {
+      grp.data = (await axios.get('/api/groups/' + grp.dim, { params: { status: grp.status } })).data;
+    };
+
+    /* ---------- 编辑弹窗 ---------- */
+    const edit = reactive({ visible: false, saving: false, id: null, form: {} });
+    const openEdit = (row) => {
+      edit.id = row.id;
+      edit.form = {
+        invoice_no: row.invoice_no || '', invoice_type: row.invoice_type || '',
+        invoice_date: row.invoice_date || '', amount_total: row.amount_total ?? null,
+        amount_without_tax: row.amount_without_tax ?? null, tax_amount: row.tax_amount ?? null,
+        seller_name: row.seller_name || '', seller_tax_no: row.seller_tax_no || '',
+        buyer_name: row.buyer_name || '', buyer_tax_no: row.buyer_tax_no || '',
+        category: row.category || ''
+      };
+      edit.visible = true;
+    };
+    const saveEdit = async () => {
+      edit.saving = true;
+      try {
+        await axios.put('/api/invoices/' + edit.id, edit.form);
+        edit.visible = false;
+        ElMessage.success('发票信息已更新');
+        loadInvoices(); loadOptions(); if (grp.data.length) loadGroups();
+      } finally { edit.saving = false; }
+    };
+
+    /* ---------- 预览 / 删除 ---------- */
+    const openPreview = (row) => { window.open('/api/invoices/' + row.id + '/preview', '_blank'); };
+    const delInvoice = async (row) => {
+      try { await ElMessageBox.confirm('确定删除发票「' + (row.seller_name || row.file_name) + '」吗？文件将一并删除。', '删除确认', { type: 'warning' }); }
+      catch (e) { return; }
+      await axios.delete('/api/invoices/' + row.id);
+      ElMessage.success('已删除');
+      loadInvoices(); loadOptions();
+    };
+
+    onMounted(async () => {
+      try { await loadEmail(); } catch (e) { /* 未配置时不提示 */ }
+      loadLogs();
+      await loadOptions();
+      loadInvoices();
+      loadGroups();
+      loadDash();
+    });
+
+    return {
+      tab, acc, saving, testing, quickFill, saveEmail, testEmail, delEmail,
+      sync, startSync, beforeUpload, onUploadOk, onUploadErr, ocr, startOcr,
+      dash, loadDash, barH, hsW, exportInvoices,
+      opts, flt, inv, selIds, searchInvoices, resetFilter, onSelChange,
+      markUsed, unmarkUsed, batchUse,
+      grp, loadGroups,
+      edit, openEdit, saveEdit,
+      openPreview, delInvoice
+    };
+  }
+});
+app.use(ElementPlus, { locale: ElementPlusLocaleZhCn });
+app.mount('#app');
+</script>
+</body>
+</html>

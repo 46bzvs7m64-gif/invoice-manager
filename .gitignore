@@ -1,0 +1,44 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# ===== 虚拟环境 =====
+venv/
+.venv/
+env/
+
+# ===== 环境变量与密钥 =====
+.env
+.env.local
+*.key
+
+# ===== 本地数据（发票文件 + 数据库，绝不上传）=====
+backend/data/
+backend/invoices_files/
+*.db
+*.db-journal
+*.sqlite3
+
+# ===== IDE / 编辑器 =====
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ===== 日志 =====
+*.log
+
+# ===== 临时测试脚本 / 诊断文件 =====
+_test_*.py
+_diag*.py
+_*_report.json
+_inv_md5.json
