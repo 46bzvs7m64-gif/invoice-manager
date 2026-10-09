@@ -3,118 +3,408 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>发票管家</title>
+<title>发票管家 · 电子发票全生命周期管理</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.7.6/dist/index.css">
 <script src="https://cdn.jsdelivr.net/npm/vue@3.4.31/dist/vue.global.prod.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/element-plus@2.7.6/dist/index.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/element-plus@2.7.6/dist/locale/zh-cn.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios@1.7.2/dist/axios.min.js"></script>
 <style>
-  body{margin:0;background:#f5f7fa;font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
-  .brand-header{background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:56px}
-  .brand-title{font-size:18px;font-weight:700}
-  .brand-sub{font-size:12px;opacity:.85}
-  .page-card{max-width:1200px;margin:0 auto}
+  :root{
+    --navy:#0f172a; --navy2:#1e293b; --brand:#2563eb; --brand-d:#1d4ed8;
+    --ink:#1e293b; --sub:#64748b; --line:#e2e8f0; --bg:#f1f5f9;
+    --red:#dc2626; --green:#16a34a; --amber:#d97706;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink)}
+
+  /* ---------- 侧边导航 ---------- */
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:214px;background:var(--navy);display:flex;flex-direction:column;z-index:100}
+  .logo{padding:20px 20px 16px;color:#fff}
+  .logo .t{font-size:18px;font-weight:700;letter-spacing:1px;display:flex;align-items:center;gap:9px}
+  .logo .t svg{flex:none}
+  .logo .s{font-size:10.5px;color:#64748b;margin-top:5px;letter-spacing:.5px}
+  .nav{flex:1;padding:6px 12px;display:flex;flex-direction:column;gap:3px}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:9px;color:#94a3b8;font-size:13.5px;cursor:pointer;transition:all .15s;user-select:none;white-space:nowrap}
+  .nav-item:hover{background:rgba(255,255,255,.06);color:#e2e8f0}
+  .nav-item.on{background:var(--brand);color:#fff;font-weight:600;box-shadow:0 4px 12px rgba(37,99,235,.35)}
+  .nav-item svg{flex:none}
+  .nav-item .nb{margin-left:auto;font-size:10px;font-weight:700;border-radius:9px;padding:1px 7px;line-height:16px}
+  .nb-blue{background:rgba(56,189,248,.18);color:#7dd3fc}
+  .nb-red{background:rgba(248,113,113,.18);color:#fca5a5}
+  .nav-item.on .nb-blue,.nav-item.on .nb-red{background:rgba(255,255,255,.22);color:#fff}
+  .side-foot{padding:14px 20px 18px;font-size:10.5px;color:#475569;line-height:1.6;border-top:1px solid rgba(255,255,255,.06)}
+
+  .wrap{margin-left:214px;min-height:100vh;display:flex;flex-direction:column}
+  .topbar{background:#fff;border-bottom:1px solid var(--line);padding:15px 26px;display:flex;align-items:center;gap:16px}
+  .page-title{font-size:17px;font-weight:700}
+  .page-sub{font-size:12px;color:var(--sub);margin-top:2px}
+  .top-act{margin-left:auto;display:flex;gap:9px}
+  .content{padding:20px 26px 40px;flex:1}
+
+  /* ---------- 通用卡片 ---------- */
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:17px 19px;margin-bottom:15px}
+  .card-h{font-size:14px;font-weight:700;margin-bottom:13px;display:flex;align-items:center;gap:9px}
+  .card-h .hint{font-size:11px;color:#94a3b8;font-weight:400}
+  .card-h .more{margin-left:auto;font-size:12px;font-weight:400}
+  .grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:15px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+
+  /* ---------- KPI ---------- */
+  .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:13px;margin-bottom:15px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 15px;position:relative;cursor:default;transition:box-shadow .15s}
+  .kpi.clickable{cursor:pointer}
+  .kpi.clickable:hover{box-shadow:0 6px 18px rgba(15,23,42,.08)}
+  .kpi .lab{font-size:12px;color:var(--sub);display:flex;align-items:center;gap:7px}
+  .kpi .ic{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none}
+  .kpi .v{font-size:22px;font-weight:700;margin-top:7px;font-variant-numeric:tabular-nums;letter-spacing:.3px}
+  .kpi .v small{font-size:11.5px;color:var(--sub);font-weight:400;margin-left:2px}
+  .kpi .ex{font-size:11px;color:var(--sub);margin-top:4px;font-variant-numeric:tabular-nums}
+  .money{color:var(--red);font-weight:700}
+
+  .progress{height:7px;border-radius:4px;background:#eef2f7;overflow:hidden;margin-top:9px}
+  .progress>i{display:block;height:100%;background:linear-gradient(90deg,#60a5fa,var(--brand));border-radius:4px;transition:width .5s}
+
+  /* ---------- 堆叠月度柱 ---------- */
+  .mchart{display:flex;align-items:flex-end;gap:10px;height:210px;padding-top:14px}
+  .mcol{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;min-width:0}
+  .mval{font-size:10.5px;color:var(--sub);margin-bottom:4px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .mbar{width:60%;max-width:42px;display:flex;flex-direction:column-reverse;border-radius:5px 5px 0 0;overflow:hidden;min-height:2px}
+  .mbar .u{background:linear-gradient(180deg,#3b82f6,#2563eb)}
+  .mbar .d{background:#cbd5e1}
+  .mcount{font-size:10px;color:#94a3b8;margin-top:6px}
+  .mlabel{font-size:11px;color:var(--sub);margin-top:2px}
+  .legend{display:flex;gap:16px;font-size:11px;color:var(--sub);margin-top:10px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+  /* ---------- 环形图 ---------- */
+  .donut-wrap{display:flex;align-items:center;gap:18px}
+  .donut{width:128px;height:128px;border-radius:50%;flex:none;position:relative;display:flex;align-items:center;justify-content:center}
+  .donut::after{content:"";position:absolute;inset:26px;background:#fff;border-radius:50%}
+  .donut .dc{position:relative;z-index:1;text-align:center}
+  .donut .dc b{font-size:19px;display:block;font-variant-numeric:tabular-nums}
+  .donut .dc span{font-size:10px;color:var(--sub)}
+  .dlg{flex:1;min-width:0}
+  .dlg .r{display:flex;align-items:center;gap:8px;font-size:12px;margin:8px 0}
+  .dlg .dot{width:8px;height:8px;border-radius:2px;flex:none}
+  .dlg .nm{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dlg .amt{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--sub);font-size:11px;white-space:nowrap}
+
+  /* ---------- 横向条 ---------- */
+  .hbar-row{display:flex;align-items:center;gap:10px;margin:11px 0;font-size:12.5px}
+  .hbar-name{width:128px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);flex:none}
+  .hbar-track{flex:1;height:13px;background:#f1f5f9;border-radius:7px;overflow:hidden}
+  .hbar-fill{height:100%;border-radius:7px;background:linear-gradient(90deg,#60a5fa,var(--brand));transition:width .5s}
+  .hbar-fill.amber{background:linear-gradient(90deg,#fbbf24,#d97706)}
+  .hbar-val{width:104px;text-align:right;font-size:11px;color:var(--sub);font-variant-numeric:tabular-nums;flex:none;white-space:nowrap}
+
+  /* ---------- 合规预警 ---------- */
+  .anomaly-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+  .abox{border:1px solid var(--line);border-radius:10px;padding:13px;background:#fafbfc}
+  .abax{border-color:rgba(220,38,38,.25);background:rgba(220,38,38,.025)}
+  .abox .at{font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:9px}
+  .abox .at .n{margin-left:auto;font-size:16px}
+  .arow{font-size:11.5px;padding:6px 8px;border-radius:6px;display:flex;flex-direction:column;gap:2px;cursor:pointer;line-height:1.45}
+  .arow:hover{background:#eef4ff}
+  .arow .a1{display:flex;justify-content:space-between;gap:8px}
+  .arow .ano{font-weight:600;color:var(--brand);font-variant-numeric:tabular-nums}
+  .arow .aamt{font-variant-numeric:tabular-nums;color:var(--red);font-weight:600;white-space:nowrap}
+  .arow .a2{color:#94a3b8;font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .aok{font-size:12px;color:var(--green);display:flex;align-items:center;gap:7px;padding:14px 4px}
+
+  /* ---------- 原页面元素 ---------- */
   .sync-log{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:12px;font-size:12px;line-height:1.7;height:260px;overflow-y:auto;font-family:Consolas,monospace;white-space:pre-wrap;margin:10px 0 0}
   .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0}
   .stat-item{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;text-align:center}
   .stat-item b{display:block;font-size:22px;color:#1e293b}
   .stat-item span{font-size:12px;color:#64748b}
-  .money{color:#dc2626;font-weight:700}
-  .filter-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:14px}
+  .filter-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:14px}
   .group-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%;font-size:14px}
   .group-title .g-name{font-weight:700;color:#1e293b;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .g-amt{color:#dc2626;font-weight:700}
   .sub-table .cell{font-size:13px}
-  .chart-title{font-size:14px;font-weight:700;color:#1e293b;margin:8px 0 12px}
-  .bar-chart{display:flex;align-items:flex-end;gap:16px;height:200px;padding:0 8px}
-  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
-  .bar-track{width:34px;flex:1;display:flex;align-items:flex-end}
-  .bar{width:100%;background:linear-gradient(180deg,#3b82f6,#2563eb);border-radius:4px 4px 0 0;min-height:2px}
-  .bar-val{font-size:11px;color:#64748b;margin-bottom:4px;white-space:nowrap}
-  .bar-label{font-size:12px;color:#64748b;margin-top:6px}
-  .hs-row{display:flex;align-items:center;gap:10px;margin-bottom:13px}
-  .hs-name{width:150px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1e293b}
-  .hs-track{flex:1;height:14px;background:#f1f5f9;border-radius:7px;overflow:hidden}
-  .hs-bar{height:100%;background:linear-gradient(90deg,#60a5fa,#2563eb);border-radius:7px}
-  .hs-amt{width:126px;font-size:12px;color:#64748b;text-align:right;white-space:nowrap}
-  @media (max-width:640px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
-  .mb12{margin-bottom:12px}
-  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
-  .mt12{margin-top:12px}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .mb12{margin-bottom:12px}.mt12{margin-top:12px}.mt15{margin-top:15px}
+  .el-main{padding:0!important}
+
+  @media (max-width:1080px){
+    .kpi-grid{grid-template-columns:repeat(3,1fr)}
+    .anomaly-grid{grid-template-columns:repeat(2,1fr)}
+    .grid2,.grid3{grid-template-columns:1fr}
+  }
+  @media (max-width:860px){
+    .sidebar{right:0;bottom:auto;width:auto;flex-direction:column;padding-bottom:0}
+    .logo{padding:12px 16px 8px}
+    .logo .s{display:none}
+    .nav{flex-direction:row;overflow-x:auto;padding:0 10px 8px;gap:6px}
+    .nav-item{padding:8px 12px}
+    .nav-item .nb{display:none}
+    .side-foot{display:none}
+    .wrap{margin-left:0;padding-top:104px}
+    .content{padding:14px 12px 32px}
+    .topbar{padding:12px 14px;gap:10px}
+    .topbar > div:first-child{min-width:0;flex:1}
+    .page-title{font-size:16px;white-space:nowrap}
+    .page-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .top-act{gap:6px;flex-shrink:0}
+    .top-act .el-button{padding:8px 11px;font-size:12px;margin-left:0}
+    .kpi-grid{grid-template-columns:repeat(2,1fr)}
+    .stat-grid{grid-template-columns:repeat(2,1fr)}
+    .anomaly-grid{grid-template-columns:1fr}
+  }
 </style>
 </head>
 <body>
 <div id="app">
-  <header class="brand-header">
-    <div>
-      <div class="brand-title">发票管家</div>
-      <div class="brand-sub">邮箱采集 · 智能识别 · 归类检索</div>
+  <!-- ============ 侧边导航 ============ -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="t">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg>
+        发票管家
+      </div>
+      <div class="s">ELECTRONIC INVOICE LIFECYCLE</div>
     </div>
-  </header>
+    <nav class="nav">
+      <div class="nav-item" :class="{on:tab==='dash'}" @click="tab='dash'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        经营仪表盘
+      </div>
+      <div class="nav-item" :class="{on:tab==='sync'}" @click="tab='sync'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+        发票采集
+      </div>
+      <div class="nav-item" :class="{on:tab==='ocr'}" @click="tab='ocr'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg>
+        智能识别
+        <span v-if="dash.pending_count+dash.failed_count>0" class="nb nb-blue">{{ dash.pending_count + dash.failed_count }}</span>
+      </div>
+      <div class="nav-item" :class="{on:tab==='groups'}" @click="goGroups">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        归类视图
+      </div>
+      <div class="nav-item" :class="{on:tab==='invoices'}" @click="tab='invoices'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>
+        发票列表
+        <span v-if="dash.unused_count>0" class="nb nb-blue">{{ dash.unused_count }}</span>
+      </div>
+      <div class="nav-item" :class="{on:tab==='email'}" @click="tab='email'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+        邮箱配置
+      </div>
+    </nav>
+    <div class="side-foot">数据仅保存在本机<br>不上传第三方服务器</div>
+  </aside>
 
-  <el-main class="page-card">
-    <el-tabs v-model="tab">
+  <!-- ============ 主区域 ============ -->
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <div class="page-title">{{ titles[tab].t }}</div>
+        <div class="page-sub">{{ titles[tab].s }}</div>
+      </div>
+      <div class="top-act" v-if="tab==='dash'">
+        <el-button type="primary" :icon="null" @click="tab='sync'">一键采集</el-button>
+        <el-button type="success" plain @click="quickExport">导出报销单</el-button>
+        <el-button text type="primary" @click="loadDash">刷新</el-button>
+      </div>
+    </div>
 
-      <!-- ========== 仪表盘 ========== -->
-      <el-tab-pane label="仪表盘" name="dash">
-        <el-card>
-          <div class="toolbar" style="margin-bottom:16px">
-            <el-button type="primary" @click="tab='sync'">一键采集</el-button>
-            <el-button type="success" plain @click="tab='invoices'">检索发票</el-button>
-            <el-button text type="primary" @click="loadDash">刷新统计</el-button>
+    <el-main class="content">
+      <!-- ==================== 仪表盘 ==================== -->
+      <section v-show="tab==='dash'">
+        <!-- KPI -->
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="lab"><span class="ic" style="background:#eff6ff;color:#2563eb"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span>发票总数</div>
+            <div class="v">{{ dash.total_count }}<small>张</small></div>
+            <div class="ex">价税合计 <b class="money">¥{{ money(dash.total_amount) }}</b></div>
           </div>
-          <div class="stat-grid">
-            <div class="stat-item"><b>{{ dash.total_count }}</b><span>发票总数</span></div>
-            <div class="stat-item"><b class="money">¥{{ dash.total_amount }}</b><span>总金额</span></div>
-            <div class="stat-item"><b style="color:#2563eb">{{ dash.unused_count }}</b><span>未使用张数</span></div>
-            <div class="stat-item"><b class="money">¥{{ dash.unused_amount }}</b><span>未使用金额</span></div>
+          <div class="kpi clickable" @click="goUnused">
+            <div class="lab"><span class="ic" style="background:#fff7ed;color:#d97706"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>待报销</div>
+            <div class="v" style="color:var(--amber)">{{ dash.unused_count }}<small>张</small></div>
+            <div class="ex">待报销金额 <b class="money">¥{{ money(dash.unused_amount) }}</b></div>
           </div>
-          <el-row :gutter="12">
-            <el-col :xs="24" :md="12" class="mt12">
-              <div class="chart-title">近 6 个月发票金额趋势（按开票日期）</div>
-              <div class="bar-chart" v-if="dash.monthly.length">
-                <div class="bar-col" v-for="m in dash.monthly" :key="m.month">
-                  <div class="bar-val">{{ m.amount ? '¥' + m.amount : '' }}</div>
-                  <div class="bar-track"><div class="bar" :style="{ height: barH(m.amount) }"></div></div>
-                  <div class="bar-label">{{ m.month.slice(5) }}月</div>
+          <div class="kpi clickable" @click="tab='invoices';flt.status='used';searchInvoices()">
+            <div class="lab"><span class="ic" style="background:#f0fdf4;color:#16a34a"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>报销进度</div>
+            <div class="v" style="color:var(--green)">{{ dash.used_ratio }}<small>%</small></div>
+            <div class="progress"><i :style="{width:(dash.used_ratio||0)+'%'}"></i></div>
+            <div class="ex" style="margin-top:5px">已用 {{ dash.used_count }} 张 / ¥{{ money(dash.used_amount) }}</div>
+          </div>
+          <div class="kpi">
+            <div class="lab"><span class="ic" style="background:#ecfdf5;color:#059669"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>进项税额</div>
+            <div class="v" style="font-size:18px;padding-top:3px">¥{{ money(dash.tax_total) }}</div>
+            <div class="ex">其中专票可抵扣 <b style="color:#059669">¥{{ money(dash.deductible_tax) }}</b></div>
+          </div>
+          <div class="kpi clickable" @click="tab='ocr'">
+            <div class="lab"><span class="ic" style="background:#eff6ff;color:#7c3aed"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg></span>识别任务</div>
+            <div class="v">{{ dash.pending_count }}<small>待识别</small></div>
+            <div class="ex"><span :style="{color:dash.failed_count?'var(--red)':'var(--sub)'}">{{ dash.failed_count }} 张失败待处理</span></div>
+          </div>
+          <div class="kpi clickable" @click="scrollToAnomaly" :class="{'abax':dash.anomaly_count>0}">
+            <div class="lab"><span class="ic" :style="dash.anomaly_count?'background:#fef2f2;color:#dc2626':'background:#f0fdf4;color:#16a34a'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>合规预警</div>
+            <div class="v" :style="{color:dash.anomaly_count?'var(--red)':'var(--green)'}">{{ dash.anomaly_count }}<small>项</small></div>
+            <div class="ex">{{ dash.anomaly_count ? '重复/大额/日期/税额异常' : '未发现异常，账票相符' }}</div>
+          </div>
+        </div>
+
+        <!-- 趋势 + 类型 -->
+        <div class="grid2">
+          <div class="card">
+            <div class="card-h">近 6 个月发票金额趋势
+              <span class="hint">按开票日期 · 堆叠：未使用 / 已使用（元）</span></div>
+            <div class="mchart" v-if="dash.monthly.length">
+              <div class="mcol" v-for="m in dash.monthly" :key="m.month">
+                <div class="mval">{{ m.amount ? '¥' + fmtK(m.amount) : '' }}</div>
+                <div class="mbar" :style="{height:mH(m.amount)}">
+                  <div class="u" :style="{height:segH(m.unused_amount,m.amount)}"></div>
+                  <div class="d" :style="{height:segH(m.used_amount,m.amount)}"></div>
+                </div>
+                <div class="mcount">{{ m.count }} 张</div>
+                <div class="mlabel">{{ m.month.slice(5) }}月</div>
+              </div>
+            </div>
+            <el-empty v-else description="暂无已识别发票" :image-size="70"></el-empty>
+            <div class="legend">
+              <span><i style="background:var(--brand)"></i>未使用（待报销）</span>
+              <span><i style="background:#cbd5e1"></i>已使用（已报销）</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h">发票类型构成<span class="hint">按金额占比</span></div>
+            <template v-if="dash.type_dist.length">
+              <div class="donut-wrap">
+                <div class="donut" :style="{background:donutBg(dash.type_dist)}">
+                  <div class="dc"><b>{{ dash.total_count }}</b><span>发票总数</span></div>
+                </div>
+                <div class="dlg">
+                  <div class="r" v-for="(t,i) in dash.type_dist" :key="t.type">
+                    <span class="dot" :style="{background:DONUT_COLORS[i%DONUT_COLORS.length]}"></span>
+                    <span class="nm" :title="t.type">{{ t.type }}</span>
+                    <span class="amt">{{ t.count }}张 · ¥{{ fmtK(t.amount) }} · {{ typePct(t.amount) }}%</span>
+                  </div>
                 </div>
               </div>
-            </el-col>
-            <el-col :xs="24" :md="12" class="mt12">
-              <div class="chart-title">开票对象 TOP5（按金额）</div>
-              <template v-if="dash.top_sellers.length">
-                <div class="hs-row" v-for="s in dash.top_sellers" :key="s.name">
-                  <span class="hs-name" :title="s.name">{{ s.name }}</span>
-                  <div class="hs-track"><div class="hs-bar" :style="{ width: hsW(s.amount) }"></div></div>
-                  <span class="hs-amt">¥{{ s.amount }} · {{ s.count }}张</span>
+            </template>
+            <el-empty v-else description="暂无数据" :image-size="70"></el-empty>
+          </div>
+        </div>
+
+        <!-- 类目 + TOP -->
+        <div class="grid2">
+          <div class="card">
+            <div class="card-h">消费类目结构<span class="hint">按金额 TOP8</span></div>
+            <template v-if="dash.category_dist.length">
+              <div class="hbar-row" v-for="c in dash.category_dist" :key="c.category">
+                <span class="hbar-name" :title="c.category">{{ c.category }}</span>
+                <div class="hbar-track"><div class="hbar-fill" :style="{width:catW(c.amount)}"></div></div>
+                <span class="hbar-val">¥{{ fmtK(c.amount) }} · {{ c.count }}张</span>
+              </div>
+            </template>
+            <el-empty v-else description="暂无类目数据（识别后自动归类）" :image-size="70"></el-empty>
+          </div>
+          <div class="card">
+            <div class="card-h">开票对象 TOP5<span class="hint">按价税合计金额</span></div>
+            <template v-if="dash.top_sellers.length">
+              <div class="hbar-row" v-for="s in dash.top_sellers" :key="s.name">
+                <span class="hbar-name" :title="s.name">{{ s.name }}</span>
+                <div class="hbar-track"><div class="hbar-fill amber" :style="{width:hsW(s.amount)}"></div></div>
+                <span class="hbar-val">¥{{ fmtK(s.amount) }} · {{ s.count }}张</span>
+              </div>
+            </template>
+            <el-empty v-else description="暂无已识别发票" :image-size="70"></el-empty>
+          </div>
+        </div>
+
+        <!-- 合规预警 -->
+        <div class="card" id="anomalyCard">
+          <div class="card-h">合规与风控预警
+            <span class="hint">规则引擎自动扫描：重复票号 · 大额发票（≥¥10,000）· 开票日期异常 · 专票缺税额</span>
+            <span class="more"><el-button text type="primary" size="small" @click="loadDash">重新扫描</el-button></span>
+          </div>
+          <div class="anomaly-grid">
+            <div class="abox" :class="{abax:dash.duplicates.length}">
+              <div class="at">重复发票号码
+                <span class="n" :style="{color:dash.duplicates.length?'var(--red)':'var(--green)'}">{{ dash.duplicates.length }}</span></div>
+              <template v-if="dash.duplicates.length">
+                <div class="arow" v-for="d in dash.duplicates" :key="d.invoice_no" @click="jumpInvoice(d.invoice_no)">
+                  <div class="a1"><span class="ano">{{ d.invoice_no }}</span><span class="aamt">×{{ d.count }} ¥{{ money(d.amount) }}</span></div>
+                  <div class="a2">{{ d.sellers.slice(0,2).join(' / ') }} · {{ d.dates.slice(0,2).join(',') }}</div>
                 </div>
               </template>
-              <el-empty v-else description="暂无已识别发票" :image-size="60"></el-empty>
-            </el-col>
-          </el-row>
-        </el-card>
-        <el-card class="mt12">
-          <template #header>最近采集</template>
-          <el-empty v-if="!dash.recent.length" description="还没有发票，点击上方「一键采集」开始" :image-size="70"></el-empty>
+              <div v-else class="aok">✓ 票号无重复</div>
+            </div>
+
+            <div class="abox" :class="{abax:dash.big_invoices.length}">
+              <div class="at">大额发票（≥1万）
+                <span class="n" :style="{color:dash.big_invoices.length?'var(--red)':'var(--green)'}">{{ dash.big_invoices.length }}</span></div>
+              <template v-if="dash.big_invoices.length">
+                <div class="arow" v-for="b in dash.big_invoices" :key="b.id" @click="jumpInvoice(b.invoice_no)">
+                  <div class="a1"><span class="ano">{{ b.invoice_no }}</span><span class="aamt">¥{{ money(b.amount_total) }}</span></div>
+                  <div class="a2">{{ b.seller_name }} · {{ b.invoice_date }}</div>
+                </div>
+              </template>
+              <div v-else class="aok">✓ 本月无大额票据</div>
+            </div>
+
+            <div class="abox" :class="{abax:dash.future_invoices.length}">
+              <div class="at">开票日期异常
+                <span class="n" :style="{color:dash.future_invoices.length?'var(--red)':'var(--green)'}">{{ dash.future_invoices.length }}</span></div>
+              <template v-if="dash.future_invoices.length">
+                <div class="arow" v-for="f in dash.future_invoices" :key="f.id" @click="jumpInvoice(f.invoice_no)">
+                  <div class="a1"><span class="ano">{{ f.invoice_no }}</span><span class="aamt">{{ f.invoice_date }}</span></div>
+                  <div class="a2">{{ f.seller_name }} · ¥{{ money(f.amount_total) }}</div>
+                </div>
+              </template>
+              <div v-else class="aok">✓ 开票日期均正常</div>
+            </div>
+
+            <div class="abox" :class="{abax:dash.missing_tax.length}">
+              <div class="at">专票缺税额
+                <span class="n" :style="{color:dash.missing_tax.length?'var(--red)':'var(--green)'}">{{ dash.missing_tax.length }}</span></div>
+              <template v-if="dash.missing_tax.length">
+                <div class="arow" v-for="x in dash.missing_tax" :key="x.id" @click="jumpInvoice(x.invoice_no)">
+                  <div class="a1"><span class="ano">{{ x.invoice_no }}</span><span class="aamt">¥{{ money(x.amount_total) }}</span></div>
+                  <div class="a2">{{ x.seller_name }} · {{ x.invoice_date }}</div>
+                </div>
+              </template>
+              <div v-else class="aok">✓ 进项税额完整可抵</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 最近采集 -->
+        <div class="card">
+          <div class="card-h">最近采集
+            <span class="hint">最新入库的 5 张发票</span>
+            <span class="more"><el-button text type="primary" size="small" @click="tab='sync'">去采集 / 上传</el-button></span>
+          </div>
+          <el-empty v-if="!dash.recent.length" description="还没有发票，点击「一键采集」开始" :image-size="70"></el-empty>
           <el-table v-else :data="dash.recent" size="small">
             <el-table-column prop="invoice_date" label="开票日期" width="105"></el-table-column>
-            <el-table-column prop="seller_name" label="销售方" min-width="160" show-overflow-tooltip></el-table-column>
-            <el-table-column label="金额" width="95">
-              <template #default="s"><span class="money">¥{{ s.row.amount_total ?? '—' }}</span></template>
+            <el-table-column prop="seller_name" label="销售方" min-width="170" show-overflow-tooltip></el-table-column>
+            <el-table-column label="金额" width="110">
+              <template #default="s"><span class="money">¥{{ s.row.amount_total != null ? money(s.row.amount_total) : '—' }}</span></template>
             </el-table-column>
-            <el-table-column label="状态" width="80">
+            <el-table-column label="类型" width="92">
+              <template #default="s">
+                <el-tag v-if="isSpecial(s.row.invoice_type)" size="small" type="success">专票</el-tag>
+                <el-tag v-else size="small" type="info" effect="plain">普票</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" width="82">
               <template #default="s">
                 <el-tag size="small" :type="s.row.status==='used'?'info':'success'">{{ s.row.status==='used'?'已使用':'未使用' }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="created_at" label="采集时间" width="140"></el-table-column>
           </el-table>
-        </el-card>
-      </el-tab-pane>
+        </div>
+      </section>
 
-      <!-- ========== 邮箱配置 ========== -->
-      <el-tab-pane label="邮箱配置" name="email">
+      <!-- ==================== 邮箱配置 ==================== -->
+      <section v-show="tab==='email'">
         <el-card>
           <el-alert type="info" :closable="false" class="mb12"
             title="首次使用：请先在邮箱网页版开启 IMAP 服务并生成授权码（不是登录密码）"></el-alert>
@@ -147,10 +437,10 @@
             </el-form-item>
           </el-form>
         </el-card>
-      </el-tab-pane>
+      </section>
 
-      <!-- ========== 发票采集 ========== -->
-      <el-tab-pane label="发票采集" name="sync">
+      <!-- ==================== 发票采集 ==================== -->
+      <section v-show="tab==='sync'">
         <el-card>
           <div class="toolbar">
             <span>采集最近</span>
@@ -204,10 +494,10 @@
             <el-table-column prop="invoices_failed" label="失败" width="70"></el-table-column>
           </el-table>
         </el-card>
-      </el-tab-pane>
+      </section>
 
-      <!-- ========== 智能识别 ========== -->
-      <el-tab-pane label="智能识别" name="ocr">
+      <!-- ==================== 智能识别 ==================== -->
+      <section v-show="tab==='ocr'">
         <el-card>
           <el-alert type="warning" :closable="false" class="mb12"
             title="识别需要百炼 API Key：请在 backend/.env 中填写 QWEN_API_KEY 并重启服务；OFD 发票暂不支持自动识别，可在列表中手动录入"></el-alert>
@@ -236,10 +526,10 @@
             <pre class="sync-log">{{ (ocr.st.lines || []).join('\n') }}</pre>
           </template>
         </el-card>
-      </el-tab-pane>
+      </section>
 
-      <!-- ========== 归类视图 ========== -->
-      <el-tab-pane label="归类视图" name="groups">
+      <!-- ==================== 归类视图 ==================== -->
+      <section v-show="tab==='groups'">
         <el-card>
           <div class="toolbar">
             <el-radio-group v-model="grp.dim" @change="loadGroups">
@@ -256,7 +546,7 @@
 
           <el-empty v-if="!grp.data.length" description="暂无可归类的发票，请先完成采集与识别"></el-empty>
 
-          <el-collapse v-else v-model="grp.active">
+          <el-collapse v-else v-model="grp.active" class="mt12">
             <el-collapse-item v-for="g in grp.data" :key="g.name" :name="g.name">
               <template #title>
                 <span class="group-title" @click.stop>
@@ -269,7 +559,7 @@
               <el-table :data="g.invoices" size="small" class="sub-table">
                 <el-table-column prop="invoice_date" label="开票日期" width="105"></el-table-column>
                 <el-table-column prop="invoice_no" label="发票号码" min-width="150" show-overflow-tooltip></el-table-column>
-                <el-table-column label="金额" width="95">
+                <el-table-column label="金额" width="100">
                   <template #default="s"><span class="money">¥{{ s.row.amount_total }}</span></template>
                 </el-table-column>
                 <el-table-column label="状态" width="80">
@@ -289,11 +579,10 @@
             </el-collapse-item>
           </el-collapse>
         </el-card>
-      </el-tab-pane>
+      </section>
 
-      <!-- ========== 发票列表 ========== -->
-      <el-tab-pane label="发票列表" name="invoices">
-        <!-- 多条件筛选器 -->
+      <!-- ==================== 发票列表 ==================== -->
+      <section v-show="tab==='invoices'">
         <div class="filter-box">
           <el-row :gutter="12">
             <el-col :xs="24" :sm="12" :md="8" class="mb12">
@@ -369,8 +658,15 @@
             <el-table-column type="selection" width="42"></el-table-column>
             <el-table-column prop="invoice_date" label="开票日期" width="100"></el-table-column>
             <el-table-column prop="seller_name" label="销售方" min-width="150" show-overflow-tooltip></el-table-column>
-            <el-table-column label="金额" width="95">
-              <template #default="s"><span class="money">¥{{ s.row.amount_total ?? '—' }}</span></template>
+            <el-table-column label="金额" width="100">
+              <template #default="s"><span class="money">¥{{ s.row.amount_total != null ? money(s.row.amount_total) : '—' }}</span></template>
+            </el-table-column>
+            <el-table-column label="类型" width="76">
+              <template #default="s">
+                <el-tag v-if="isSpecial(s.row.invoice_type)" size="small" type="success">专票</el-tag>
+                <el-tag v-else-if="s.row.invoice_type" size="small" type="info" effect="plain">普票</el-tag>
+                <span v-else style="color:#94a3b8;font-size:11px">—</span>
+              </template>
             </el-table-column>
             <el-table-column prop="invoice_no" label="发票号码" min-width="145" show-overflow-tooltip></el-table-column>
             <el-table-column prop="buyer_name" label="购买方" min-width="130" show-overflow-tooltip></el-table-column>
@@ -395,35 +691,34 @@
             :total="inv.total" :page-size="inv.pageSize"
             v-model:current-page="flt.page" @current-change="loadInvoices"></el-pagination>
         </el-card>
-      </el-tab-pane>
+      </section>
+    </el-main>
+  </div>
 
-    </el-tabs>
-
-    <!-- ========== 编辑发票弹窗 ========== -->
-    <el-dialog v-model="edit.visible" title="编辑发票信息" width="560px">
-      <el-form :model="edit.form" label-width="100px">
-        <el-form-item label="发票号码"><el-input v-model="edit.form.invoice_no"></el-input></el-form-item>
-        <el-form-item label="发票类型"><el-input v-model="edit.form.invoice_type"></el-input></el-form-item>
-        <el-form-item label="开票日期"><el-date-picker v-model="edit.form.invoice_date" type="date" value-format="YYYY-MM-DD" style="width:100%"></el-date-picker></el-form-item>
-        <el-form-item label="价税合计"><el-input-number v-model="edit.form.amount_total" :min="0" :precision="2" controls-position="right" style="width:100%"></el-input-number></el-form-item>
-        <el-form-item label="不含税金额"><el-input-number v-model="edit.form.amount_without_tax" :min="0" :precision="2" controls-position="right" style="width:100%"></el-input-number></el-form-item>
-        <el-form-item label="税额"><el-input-number v-model="edit.form.tax_amount" :min="0" :precision="2" controls-position="right" style="width:100%"></el-input-number></el-form-item>
-        <el-form-item label="销售方名称"><el-input v-model="edit.form.seller_name"></el-input></el-form-item>
-        <el-form-item label="销售方税号"><el-input v-model="edit.form.seller_tax_no"></el-input></el-form-item>
-        <el-form-item label="购买方名称"><el-input v-model="edit.form.buyer_name"></el-input></el-form-item>
-        <el-form-item label="购买方税号"><el-input v-model="edit.form.buyer_tax_no"></el-input></el-form-item>
-        <el-form-item label="消费类目"><el-input v-model="edit.form.category" placeholder="餐饮/交通/住宿/购物/加油/通讯/其他"></el-input></el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="edit.visible=false">取消</el-button>
-        <el-button type="primary" :loading="edit.saving" @click="saveEdit">保存</el-button>
-      </template>
-    </el-dialog>
-  </el-main>
+  <!-- ========== 编辑发票弹窗 ========== -->
+  <el-dialog v-model="edit.visible" title="编辑发票信息" width="560px">
+    <el-form :model="edit.form" label-width="100px">
+      <el-form-item label="发票号码"><el-input v-model="edit.form.invoice_no"></el-input></el-form-item>
+      <el-form-item label="发票类型"><el-input v-model="edit.form.invoice_type"></el-input></el-form-item>
+      <el-form-item label="开票日期"><el-date-picker v-model="edit.form.invoice_date" type="date" value-format="YYYY-MM-DD" style="width:100%"></el-date-picker></el-form-item>
+      <el-form-item label="价税合计"><el-input-number v-model="edit.form.amount_total" :min="0" :precision="2" controls-position="right" style="width:100%"></el-input-number></el-form-item>
+      <el-form-item label="不含税金额"><el-input-number v-model="edit.form.amount_without_tax" :min="0" :precision="2" controls-position="right" style="width:100%"></el-input-number></el-form-item>
+      <el-form-item label="税额"><el-input-number v-model="edit.form.tax_amount" :min="0" :precision="2" controls-position="right" style="width:100%"></el-input-number></el-form-item>
+      <el-form-item label="销售方名称"><el-input v-model="edit.form.seller_name"></el-input></el-form-item>
+      <el-form-item label="销售方税号"><el-input v-model="edit.form.seller_tax_no"></el-input></el-form-item>
+      <el-form-item label="购买方名称"><el-input v-model="edit.form.buyer_name"></el-input></el-form-item>
+      <el-form-item label="购买方税号"><el-input v-model="edit.form.buyer_tax_no"></el-input></el-form-item>
+      <el-form-item label="消费类目"><el-input v-model="edit.form.category" placeholder="餐饮/交通/住宿/购物/加油/通讯/其他"></el-input></el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="edit.visible=false">取消</el-button>
+      <el-button type="primary" :loading="edit.saving" @click="saveEdit">保存</el-button>
+    </template>
+  </el-dialog>
 </div>
 
 <script>
-const { createApp, reactive, ref, onMounted } = Vue;
+const { createApp, reactive, ref, nextTick, onMounted } = Vue;
 const { ElMessage, ElMessageBox, ElNotification } = ElementPlus;
 
 axios.interceptors.response.use(r => r, err => {
@@ -436,6 +731,14 @@ axios.interceptors.response.use(r => r, err => {
 const app = createApp({
   setup() {
     const tab = ref('dash');
+    const titles = {
+      dash:    { t:'经营仪表盘', s:'发票总量 · 进项税 · 报销进度 · 合规预警一览' },
+      sync:    { t:'发票采集', s:'邮箱 IMAP 增量采集 + 本地 PDF/OFD 手动上传' },
+      ocr:     { t:'智能识别', s:'通义千问多模态大模型结构化抽取发票字段' },
+      groups:  { t:'归类视图', s:'按销售方 / 购买方折叠分组浏览' },
+      invoices:{ t:'发票列表', s:'多条件组合检索 · 核销 · Excel 报销单导出' },
+      email:   { t:'邮箱配置', s:'IMAP 账户与授权码（Fernet 加密存储）' },
+    };
 
     /* ---------- 邮箱配置 ---------- */
     const acc = reactive({ id: null, email: '', imap_host: '', imap_port: 993, use_ssl: true, auth_code: '', sender_whitelist: '' });
@@ -491,13 +794,13 @@ const app = createApp({
       if (!sync.taskId) return;
       const st = (await axios.get('/api/sync/status/' + sync.taskId)).data;
       sync.st = st;
-      await Vue.nextTick();
+      await nextTick();
       const boxes = document.querySelectorAll('.sync-log');
       const box = boxes[0];
       if (box) box.scrollTop = box.scrollHeight;
       if (st.status !== 'running') {
         clearInterval(sync.timer); sync.running = false;
-        loadLogs(); loadInvoices(); loadOptions();
+        loadLogs(); loadInvoices(); loadOptions(); loadDash();
         if (st.status === 'done') ElNotification.success({ title: '采集完成', message: '扫描 ' + st.scanned + ' 封邮件，下载发票 ' + st.downloaded + ' 张' });
       }
     };
@@ -521,7 +824,6 @@ const app = createApp({
       loadInvoices(); loadOptions(); loadDash();
     };
     const onUploadErr = (err, file) => {
-      // err.message 为服务端返回的 JSON 原文
       let msg = '上传失败';
       try { const d = JSON.parse(err.message); if (d.detail) msg = d.detail; } catch (e) {}
       ElMessage.error(file.name + '：' + msg);
@@ -543,22 +845,22 @@ const app = createApp({
       if (!ocr.taskId) return;
       const st = (await axios.get('/api/ocr/status/' + ocr.taskId)).data;
       ocr.st = st;
-      await Vue.nextTick();
+      await nextTick();
       const boxes = document.querySelectorAll('.sync-log');
       const box = boxes[boxes.length - 1];
       if (box) box.scrollTop = box.scrollHeight;
       if (st.status !== 'running') {
         clearInterval(ocr.timer); ocr.running = false;
-        loadInvoices(); loadOptions();
+        loadInvoices(); loadOptions(); loadDash();
         if (st.status === 'done') ElNotification.success({ title: '识别完成', message: '成功 ' + (st.success || 0) + ' 张，失败 ' + (st.failed || 0) + ' 张' });
       }
     };
 
-    /* ---------- 筛选项数据 ---------- */
+    /* ---------- 筛选项 ---------- */
     const opts = reactive({ sellers: [], buyers: [], types: [], categories: [] });
     const loadOptions = async () => { Object.assign(opts, (await axios.get('/api/groups/options')).data); };
 
-    /* ---------- 发票列表筛选 ---------- */
+    /* ---------- 发票列表 ---------- */
     const defaultFlt = () => ({
       seller: '', buyer: '', dateRange: [], amountMin: null, amountMax: null,
       invoiceType: '', category: '', keyword: '',
@@ -586,6 +888,7 @@ const app = createApp({
     const searchInvoices = () => { flt.page = 1; loadInvoices(); };
     const resetFilter = () => { Object.assign(flt, defaultFlt()); loadInvoices(); };
     const onSelChange = (rows) => { selIds.value = rows.map(r => r.id); };
+    const isSpecial = (t) => !!t && (t.includes('专用') || t.includes('专票'));
 
     /* ---------- 标记使用 ---------- */
     const askRemark = async () => {
@@ -615,20 +918,54 @@ const app = createApp({
       ElMessage.success(r.message);
       afterUse();
     };
-    // 标记后同时刷新列表、归类视图和筛选项
     const afterUse = () => { loadInvoices(); loadOptions(); if (grp.data.length) loadGroups(); loadDash(); };
 
     /* ---------- 仪表盘 ---------- */
-    const dash = reactive({ total_count: 0, total_amount: 0, unused_count: 0, unused_amount: 0, monthly: [], top_sellers: [], recent: [] });
+    const dash = reactive({
+      total_count: 0, total_amount: 0, net_total: 0, tax_total: 0, deductible_tax: 0,
+      unused_count: 0, unused_amount: 0, used_count: 0, used_amount: 0, used_ratio: 0,
+      pending_count: 0, failed_count: 0, anomaly_count: 0,
+      monthly: [], top_sellers: [], type_dist: [], category_dist: [],
+      duplicates: [], big_invoices: [], future_invoices: [], missing_tax: [], recent: []
+    });
     const loadDash = async () => { Object.assign(dash, (await axios.get('/api/dashboard')).data); };
-    const barH = (amt) => {
-      const max = Math.max(...dash.monthly.map(m => m.amount || 0), 1);
-      return Math.max(2, Math.round((amt || 0) / max * 140)) + 'px';
+
+    const money = (n) => (Number(n) || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtK = (n) => n >= 10000 ? (n / 10000).toFixed(1) + '万' : Math.round(n).toLocaleString('zh-CN');
+    const mMax = () => Math.max(...dash.monthly.map(m => m.amount || 0), 1);
+    const mH = (amt) => Math.max(2, Math.round((amt || 0) / mMax() * 150)) + 'px';
+    const segH = (sub, total) => (total ? Math.max(0, Math.round(sub / total * 100)) + '%' : '0%');
+    const hsMax = () => Math.max(...dash.top_sellers.map(s => s.amount || 0), 1);
+    const hsW = (amt) => Math.max(4, Math.round((amt || 0) / hsMax() * 100)) + '%';
+    const catMax = () => Math.max(...dash.category_dist.map(c => c.amount || 0), 1);
+    const catW = (amt) => Math.max(4, Math.round((amt || 0) / catMax() * 100)) + '%';
+
+    const DONUT_COLORS = ['#2563eb', '#16a34a', '#d97706', '#7c3aed', '#0891b2', '#64748b', '#e11d48'];
+    const typeAmountTotal = () => dash.type_dist.reduce((a, t) => a + (t.amount || 0), 0) || 1;
+    const typePct = (amt) => ((amt || 0) / typeAmountTotal() * 100).toFixed(1);
+    const donutBg = (items) => {
+      let acc = 0; const tot = typeAmountTotal();
+      const segs = items.map((it, i) => {
+        const start = acc; acc += (it.amount || 0) / tot * 100;
+        return `${DONUT_COLORS[i % DONUT_COLORS.length]} ${start}% ${acc}%`;
+      });
+      return 'conic-gradient(' + segs.join(',') + ')';
     };
-    const hsW = (amt) => {
-      const max = Math.max(...dash.top_sellers.map(s => s.amount || 0), 1);
-      return Math.max(4, Math.round((amt || 0) / max * 100)) + '%';
+
+    /* 仪表盘跳转 */
+    const goUnused = () => { Object.assign(flt, defaultFlt()); tab.value = 'invoices'; loadInvoices(); };
+    const goGroups = () => { tab.value = 'groups'; if (!grp.data.length) loadGroups(); };
+    const jumpInvoice = (no) => {
+      tab.value = 'invoices';
+      flt.status = 'all'; flt.keyword = no || ''; flt.page = 1;
+      loadInvoices();
+      ElMessage.info('已按发票号 ' + (no || '') + ' 定位，请在列表中核对');
     };
+    const scrollToAnomaly = () => {
+      const elCard = document.getElementById('anomalyCard');
+      if (elCard) elCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    const quickExport = () => { tab.value = 'invoices'; ElMessage.info('在发票列表设置筛选后点「导出报销单」'); };
 
     /* ---------- 导出报销单 ---------- */
     const exportInvoices = async () => {
@@ -641,7 +978,7 @@ const app = createApp({
         );
         markUsed = true;
       } catch (act) {
-        if (act === 'close' || act === undefined) return; // 右上角关闭 → 取消
+        if (act === 'close' || act === undefined) return;
       }
       const p = buildParams();
       const qs = new URLSearchParams();
@@ -680,7 +1017,7 @@ const app = createApp({
         await axios.put('/api/invoices/' + edit.id, edit.form);
         edit.visible = false;
         ElMessage.success('发票信息已更新');
-        loadInvoices(); loadOptions(); if (grp.data.length) loadGroups();
+        loadInvoices(); loadOptions(); loadDash(); if (grp.data.length) loadGroups();
       } finally { edit.saving = false; }
     };
 
@@ -691,7 +1028,7 @@ const app = createApp({
       catch (e) { return; }
       await axios.delete('/api/invoices/' + row.id);
       ElMessage.success('已删除');
-      loadInvoices(); loadOptions();
+      loadInvoices(); loadOptions(); loadDash();
     };
 
     onMounted(async () => {
@@ -704,12 +1041,15 @@ const app = createApp({
     });
 
     return {
-      tab, acc, saving, testing, quickFill, saveEmail, testEmail, delEmail,
+      tab, titles,
+      acc, saving, testing, quickFill, saveEmail, testEmail, delEmail,
       sync, startSync, beforeUpload, onUploadOk, onUploadErr, ocr, startOcr,
-      dash, loadDash, barH, hsW, exportInvoices,
-      opts, flt, inv, selIds, searchInvoices, resetFilter, onSelChange,
+      opts, flt, inv, selIds, searchInvoices, resetFilter, onSelChange, isSpecial,
       markUsed, unmarkUsed, batchUse,
-      grp, loadGroups,
+      dash, loadDash, money, fmtK, mH, segH, hsW, catW,
+      DONUT_COLORS, typePct, donutBg,
+      goUnused, goGroups, jumpInvoice, scrollToAnomaly, quickExport,
+      exportInvoices, grp, loadGroups,
       edit, openEdit, saveEdit,
       openPreview, delInvoice
     };
