@@ -4,12 +4,15 @@
 
 **邮箱自动采集 → 大模型智能识别 → 归类检索 → 报销闭环，一站式电子发票管理系统**
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-在线演示-2563eb?logo=github&logoColor=white)](https://46bzvs7m64-gif.github.io/invoice-manager/)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688?logo=fastapi&logoColor=white)
 ![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?logo=vuedotjs&logoColor=white)
 ![Element Plus](https://img.shields.io/badge/Element_Plus-2.x-409EFF?logo=element&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-3-003B57?logo=sqlite&logoColor=white)
 ![Qwen](https://img.shields.io/badge/Qwen-3.8-615CED?logo=alibabadotcom&logoColor=white)
+
+> **[👉 点击体验在线演示（免安装）](https://46bzvs7m64-gif.github.io/invoice-manager/)** — 内置模拟发票数据，完整体验仪表盘、检索核销、归类视图、采集与识别全流程。
 
 </div>
 
