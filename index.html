@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>发票管家 · 在线演示</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.7.6/dist/index.css">
+<script src="https://cdn.jsdelivr.net/npm/vue@3.4.31/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/element-plus@2.7.6/dist/index.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/element-plus@2.7.6/dist/locale/zh-cn.min.js"></script>
+<style>
+  body{margin:0;background:#f1f5f9;font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  .brand-header{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;display:flex;align-items:center;
+    justify-content:space-between;padding:0 24px;height:60px;box-shadow:0 2px 12px rgba(37,99,235,.3)}
+  .brand-title{font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px}
+  .brand-title .logo{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.2);
+    display:flex;align-items:center;justify-content:center;font-size:18px}
+  .brand-sub{font-size:12px;opacity:.85;margin-top:2px}
+  .demo-badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);border-radius:999px;
+    padding:5px 14px;font-size:12px;font-weight:600}
+  .page-card{max-width:1240px;margin:0 auto}
+  .sync-log{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:12px;font-size:12px;line-height:1.75;
+    height:240px;overflow-y:auto;font-family:Consolas,"Courier New",monospace;white-space:pre-wrap;margin:10px 0 0}
+  .sync-log .t-ok{color:#34d399}.sync-log .t-warn{color:#fbbf24}.sync-log .t-info{color:#38bdf8}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0}
+  .stat-item{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:center;
+    box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .stat-item b{display:block;font-size:26px;color:#1e293b;font-weight:700;line-height:1.2}
+  .stat-item span{font-size:12px;color:#64748b}
+  .stat-item .sub{font-size:11px;color:#94a3b8;margin-top:4px}
+  .money{color:#dc2626;font-weight:700}
+  .filter-box{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:14px}
+  .group-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%;font-size:14px}
+  .group-title .g-name{font-weight:700;color:#1e293b;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .g-amt{color:#dc2626;font-weight:700}
+  .chart-title{font-size:14px;font-weight:700;color:#1e293b;margin:8px 0 12px}
+  .bar-chart{display:flex;align-items:flex-end;gap:14px;height:200px;padding:0 8px}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .bar-track{width:38px;flex:1;display:flex;align-items:flex-end}
+  .bar{width:100%;background:linear-gradient(180deg,#3b82f6,#2563eb);border-radius:5px 5px 0 0;min-height:2px;transition:height .4s}
+  .bar-val{font-size:11px;color:#64748b;margin-bottom:4px;white-space:nowrap;font-weight:600}
+  .bar-label{font-size:12px;color:#64748b;margin-top:6px}
+  .hs-row{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+  .hs-name{width:150px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1e293b}
+  .hs-track{flex:1;height:14px;background:#f1f5f9;border-radius:7px;overflow:hidden}
+  .hs-bar{height:100%;background:linear-gradient(90deg,#60a5fa,#2563eb);border-radius:7px;transition:width .4s}
+  .hs-amt{width:130px;font-size:12px;color:#64748b;text-align:right;white-space:nowrap}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .mb12{margin-bottom:12px}.mt12{margin-top:12px}
+  .demo-note{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12.5px;
+    color:#1e40af;margin-bottom:14px;line-height:1.6}
+  .demo-note b{color:#1d4ed8}
+  .health-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+  .health-item{background:#f8fafc;border-radius:8px;padding:12px;border:1px solid #e2e8f0}
+  .health-item .hl{font-size:11px;color:#64748b}.health-item .hv{font-size:20px;font-weight:700;margin-top:3px}
+  .health-item.ok .hv{color:#16a34a}.health-item.warn .hv{color:#d97706}.health-item.bad .hv{color:#dc2626}
+  .timeline{position:relative;padding-left:24px}
+  .timeline::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:#cbd5e1}
+  .tl-item{position:relative;margin-bottom:16px}
+  .tl-item::before{content:"";position:absolute;left:-21px;top:4px;width:12px;height:12px;border-radius:50%;
+    background:#2563eb;border:2px solid #fff;box-shadow:0 0 0 2px #2563eb}
+  .tl-item.done::before{background:#16a34a;box-shadow:0 0 0 2px #16a34a}
+  .tl-title{font-size:13px;font-weight:600;color:#1e293b}
+  .tl-desc{font-size:12px;color:#64748b;margin-top:2px;line-height:1.5}
+  @media(max-width:768px){.stat-grid{grid-template-columns:repeat(2,1fr)}.health-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="brand-header">
+    <div>
+      <div class="brand-title"><span class="logo">🧾</span>发票管家</div>
+      <div class="brand-sub">邮箱采集 · 智能识别 · 归类检索 · 报销闭环</div>
+    </div>
+    <div class="demo-badge">● 在线演示（内置模拟数据）</div>
+  </header>
+
+  <el-main class="page-card" style="padding-top:18px">
+    <div class="demo-note">
+      <b>演示说明：</b>本页面为发票管家的<b>免后端在线演示</b>，内置 36 张模拟发票数据，完整体验仪表盘、检索核销、归类视图、采集与识别流程。
+      真实系统为 FastAPI + Vue3 全栈应用（仓库 <code>backend/</code> 目录），支持 IMAP 邮箱自动采集、通义千问多模态 OCR、Excel 报销单导出。
+      <a href="https://github.com/46bzvs7m64-gif/invoice-manager" target="_blank" style="color:#2563eb;font-weight:600">查看完整源码 →</a>
+    </div>
+
+    <el-tabs v-model="tab">
+      <!-- ========== 仪表盘 ========== -->
+      <el-tab-pane label="仪表盘" name="dash">
+        <el-card>
+          <div class="toolbar">
+            <el-button type="primary" @click="tab='sync'">一键采集</el-button>
+            <el-button type="success" plain @click="tab='invoices'">检索发票</el-button>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-item"><b>{{ dash.total_count }}</b><span>发票总数</span>
+              <div class="sub">累计采集</div></div>
+            <div class="stat-item"><b class="money">¥{{ dash.total_amount }}</b><span>总金额</span>
+              <div class="sub">价税合计</div></div>
+            <div class="stat-item"><b style="color:#2563eb">{{ dash.unused_count }}</b><span>未使用张数</span>
+              <div class="sub">待报销</div></div>
+            <div class="stat-item"><b class="money">¥{{ dash.unused_amount }}</b><span>未使用金额</span>
+              <div class="sub">可报销额度</div></div>
+          </div>
+
+          <el-row :gutter="12">
+            <el-col :xs="24" :md="12" class="mt12">
+              <div class="chart-title">近 6 个月发票金额趋势（按开票日期）</div>
+              <div class="bar-chart" v-if="dash.monthly.length">
+                <div class="bar-col" v-for="m in dash.monthly" :key="m.month">
+                  <div class="bar-val">{{ m.amount ? '¥'+m.amount : '' }}</div>
+                  <div class="bar-track"><div class="bar" :style="{ height: barH(m.amount) }"></div></div>
+                  <div class="bar-label">{{ m.month.slice(5) }}月</div>
+                </div>
+              </div>
+            </el-col>
+            <el-col :xs="24" :md="12" class="mt12">
+              <div class="chart-title">开票对象 TOP5（按金额）</div>
+              <div class="hs-row" v-for="s in dash.top_sellers" :key="s.name">
+                <span class="hs-name" :title="s.name">{{ s.name }}</span>
+                <div class="hs-track"><div class="hs-bar" :style="{ width: hsW(s.amount) }"></div></div>
+                <span class="hs-amt">¥{{ s.amount }} · {{ s.count }}张</span>
+              </div>
+            </el-col>
+          </el-row>
+        </el-card>
+
+        <el-card class="mt12">
+          <template #header>数据健康度检查</template>
+          <div class="health-grid">
+            <div class="health-item ok"><div class="hl">识别成功率</div><div class="hv">{{ dash.ocr_rate }}%</div></div>
+            <div class="health-item ok"><div class="hl">金额字段完整率</div><div class="hv">{{ dash.amount_rate }}%</div></div>
+            <div class="health-item" :class="dash.unused_count>20?'warn':'ok'"><div class="hl">未核销发票</div><div class="hv">{{ dash.unused_count }} 张</div></div>
+          </div>
+        </el-card>
+      </el-tab-pane>
+
+      <!-- ========== 发票列表 ========== -->
+      <el-tab-pane label="发票列表" name="invoices">
+        <div class="filter-box">
+          <el-row :gutter="12">
+            <el-col :xs="24" :sm="12" :md="8" class="mb12">
+              <el-select v-model="flt.seller" filterable clearable placeholder="销售方" style="width:100%">
+                <el-option v-for="s in opts.sellers" :key="s" :label="s" :value="s"></el-option>
+              </el-select>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="mb12">
+              <el-select v-model="flt.category" clearable placeholder="类目" style="width:100%">
+                <el-option v-for="c in opts.categories" :key="c" :label="c" :value="c"></el-option>
+              </el-select>
+            </el-col>
+            <el-col :xs="12" :sm="6" :md="4" class="mb12">
+              <el-select v-model="flt.status" style="width:100%">
+                <el-option label="未使用" value="unused"></el-option>
+                <el-option label="全部状态" value="all"></el-option>
+                <el-option label="已使用" value="used"></el-option>
+              </el-select>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="mb12">
+              <el-input v-model="flt.keyword" placeholder="关键词：发票号 / 销售方" clearable @keyup.enter="search"></el-input>
+            </el-col>
+          </el-row>
+        </div>
+
+        <el-card>
+          <div class="toolbar" style="margin-bottom:10px">
+            <span style="margin-left:auto;font-size:13px;color:#64748b">
+              共 <b>{{ filtered.length }}</b> 条，金额合计
+              <b class="money" style="font-size:15px">¥{{ matchedAmount }}</b></span>
+          </div>
+          <el-table :data="filtered" size="small" max-height="620">
+            <el-table-column prop="invoice_date" label="开票日期" width="105"></el-table-column>
+            <el-table-column prop="seller_name" label="销售方" min-width="160" show-overflow-tooltip></el-table-column>
+            <el-table-column label="金额" width="100">
+              <template #default="s"><span class="money">¥{{ s.row.amount_total }}</span></template>
+            </el-table-column>
+            <el-table-column prop="invoice_no" label="发票号码" min-width="150" show-overflow-tooltip></el-table-column>
+            <el-table-column prop="category" label="类目" width="80"></el-table-column>
+            <el-table-column label="状态" width="80">
+              <template #default="s">
+                <el-tag size="small" :type="s.row.status==='used'?'info':'success'">
+                  {{ s.row.status==='used'?'已使用':'未使用' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="120" fixed="right">
+              <template #default="s">
+                <el-button v-if="s.row.status!=='used'" link type="warning" @click="markUsed(s.row)">标记</el-button>
+                <el-button v-else link type="success" @click="unmarkUsed(s.row)">撤销</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </el-tab-pane>
+
+      <!-- ========== 归类视图 ========== -->
+      <el-tab-pane label="归类视图" name="groups">
+        <el-card>
+          <div class="toolbar">
+            <el-radio-group v-model="grp.dim">
+              <el-radio-button label="sellers">按销售方</el-radio-button>
+              <el-radio-button label="categories">按类目</el-radio-button>
+            </el-radio-group>
+            <span style="color:#94a3b8;font-size:12px">共 {{ grp.data.length }} 个分组</span>
+          </div>
+          <el-collapse v-model="grp.active">
+            <el-collapse-item v-for="g in grp.data" :key="g.name" :name="g.name">
+              <template #title>
+                <span class="group-title">
+                  <span class="g-name">{{ g.name }}</span>
+                  <el-tag size="small" type="primary">{{ g.count }} 张</el-tag>
+                  <span class="g-amt">¥{{ g.amount_total }}</span>
+                </span>
+              </template>
+              <el-table :data="g.invoices" size="small">
+                <el-table-column prop="invoice_date" label="日期" width="105"></el-table-column>
+                <el-table-column prop="invoice_no" label="发票号" min-width="150" show-overflow-tooltip></el-table-column>
+                <el-table-column label="金额" width="100">
+                  <template #default="s"><span class="money">¥{{ s.row.amount_total }}</span></template>
+                </el-table-column>
+                <el-table-column label="状态" width="80">
+                  <template #default="s">
+                    <el-tag size="small" :type="s.row.status==='used'?'info':'success'">
+                      {{ s.row.status==='used'?'已使用':'未使用' }}</el-tag>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </el-collapse-item>
+          </el-collapse>
+        </el-card>
+      </el-tab-pane>
+
+      <!-- ========== 采集演示 ========== -->
+      <el-tab-pane label="采集演示" name="sync">
+        <el-card>
+          <div class="toolbar">
+            <span>模拟采集最近</span>
+            <el-input-number v-model="sync.days" :min="1" :max="365"></el-input-number>
+            <span>天的邮件</span>
+            <el-button type="primary" :loading="sync.running" :disabled="sync.running" @click="startSync">一键采集</el-button>
+          </div>
+          <div class="stat-grid" v-if="sync.started">
+            <div class="stat-item"><b>{{ sync.scanned }}</b><span>扫描邮件</span></div>
+            <div class="stat-item"><b>{{ sync.found }}</b><span>命中候选</span></div>
+            <div class="stat-item"><b>{{ sync.downloaded }}</b><span>已下载发票</span></div>
+            <div class="stat-item"><b>{{ sync.skipped }}</b><span>跳过(重复)</span></div>
+          </div>
+          <pre class="sync-log" v-html="sync.log"></pre>
+          <div class="demo-note" style="margin-top:12px">
+            真实系统通过 IMAP UID 游标实现<b>增量同步</b>，三层漏斗过滤（日期 → 主题/发件人 → 文件魔数），附件 MD5 哈希去重，确保不重复入库。
+          </div>
+        </el-card>
+      </el-tab-pane>
+
+      <!-- ========== 识别演示 ========== -->
+      <el-tab-pane label="识别演示" name="ocr">
+        <el-card>
+          <div class="toolbar">
+            <el-button type="primary" :loading="ocr.running" :disabled="ocr.running" @click="startOcr">开始识别（3 张待识别）</el-button>
+          </div>
+          <div class="stat-grid" v-if="ocr.started">
+            <div class="stat-item"><b>{{ ocr.total }}</b><span>待识别总数</span></div>
+            <div class="stat-item"><b style="color:#16a34a">{{ ocr.success }}</b><span>识别成功</span></div>
+            <div class="stat-item"><b style="color:#dc2626">{{ ocr.failed }}</b><span>识别失败</span></div>
+            <div class="stat-item"><b>{{ ocr.current }}</b><span>当前进度</span></div>
+          </div>
+          <pre class="sync-log" v-html="ocr.log"></pre>
+          <div class="demo-note" style="margin-top:12px">
+            真实系统将 PDF 以 Base64 直传通义千问多模态大模型，<b>temperature=0</b> 保证抽取确定性，强约束纯 JSON 输出，自动完成日期归一化、金额清洗、发票号查重。
+          </div>
+
+          <el-divider>识别流程拆解</el-divider>
+          <div class="timeline">
+            <div class="tl-item done">
+              <div class="tl-title">1. PDF 转 Base64</div>
+              <div class="tl-desc">读取发票文件，编码为 Base64 字符串，直传大模型多模态接口</div>
+            </div>
+            <div class="tl-item done">
+              <div class="tl-title">2. 大模型结构化抽取</div>
+              <div class="tl-desc">qwen3.8 多模态理解发票版面，输出 JSON：发票号/日期/金额/税额/购销方/税号</div>
+            </div>
+            <div class="tl-item done">
+              <div class="tl-title">3. 字段归一化</div>
+              <div class="tl-desc">日期 → YYYY-MM-DD；金额 → 去 ¥ 与千分位；价税合计缺失时用不含税+税额兜底</div>
+            </div>
+            <div class="tl-item done">
+              <div class="tl-title">4. 入库 & 查重</div>
+              <div class="tl-desc">发票号码跨记录查重，MD5 拦截重复文件，写入 SQLite</div>
+            </div>
+          </div>
+        </el-card>
+      </el-tab-pane>
+    </el-tabs>
+  </el-main>
+</div>
+
+<script>
+const { createApp, reactive, ref, computed, onMounted } = Vue;
+const { ElMessage } = ElementPlus;
+
+/* ========== Mock 数据（36 张发票） ========== */
+const SELLERS=['中石化销售有限公司','滴滴出行科技有限公司','美团点评','京东商城','阿里巴巴',
+  '特斯拉汽车','华为技术','顺丰速运','如家酒店','星巴克咖啡','中国移动','中国电信',
+  '国家电网','南方航空','饿了么','上海地铁','猫眼电影','海底捞火锅'];
+const CATEGORIES=['加油','交通','餐饮','购物','住宿','通讯','水电','机票','娱乐'];
+const CAT_MAP={'中石化销售有限公司':'加油','滴滴出行科技有限公司':'交通','美团点评':'餐饮',
+  '京东商城':'购物','阿里巴巴':'购物','特斯拉汽车':'购物','华为技术':'通讯','顺丰速运':'交通',
+  '如家酒店':'住宿','星巴克咖啡':'餐饮','中国移动':'通讯','中国电信':'通讯','国家电网':'水电',
+  '南方航空':'机票','饿了么':'餐饮','上海地铁':'交通','猫眼电影':'娱乐','海底捞火锅':'餐饮'};
+const BUYERS=['北京某某科技有限公司','上海某某文化传媒','深圳某某咨询公司'];
+
+function seededRandom(seed){let s=seed;return function(){s=(s*9301+49297)%233280;return s/233280}}
+const rng=seededRandom(20240930);
+function rndItem(arr){return arr[Math.floor(rng()*arr.length)]}
+function pad(n){return n<10?'0'+n:''+n}
+
+const mockInvoices=[];
+for(let i=0;i<36;i++){
+  const seller=rndItem(SELLERS);
+  const category=CAT_MAP[seller]||rndItem(CATEGORIES);
+  const year=2024, month=Math.floor(rng()*10)+3;
+  const day=Math.floor(rng()*28)+1;
+  const amount=+(rng()*4500+120).toFixed(2);
+  const tax=+(amount*0.06).toFixed(2);
+  const invNo=(24000000000+Math.floor(rng()*99999999)).toString();
+  mockInvoices.push({
+    id:i+1,
+    invoice_no:invNo,
+    invoice_type:'电子普通发票',
+    invoice_date:`${year}-${pad(month)}-${pad(day)}`,
+    amount_total:amount,
+    amount_without_tax:+(amount-tax).toFixed(2),
+    tax_amount:tax,
+    seller_name:seller,
+    seller_tax_no:'91110000MA01ABC'+Math.floor(rng()*900+100),
+    buyer_name:rndItem(BUYERS),
+    buyer_tax_no:'91110000MA02DEF'+Math.floor(rng()*900+100),
+    category:category,
+    status:rng()<0.4?'used':'unused',
+    file_name:`发票_${seller.slice(0,6)}_${invNo.slice(-8)}.pdf`,
+    ocr_status:'success',
+    created_at:`2024-${pad(month)}-${pad(day)} 10:${pad(Math.floor(rng()*60))}:00`
+  });
+}
+
+const app=createApp({
+  setup(){
+    const tab=ref('dash');
+    const invoices=reactive([...mockInvoices]);
+
+    /* ----- 仪表盘 ----- */
+    const dash=reactive({total_count:0,total_amount:0,unused_count:0,unused_amount:0,
+      monthly:[],top_sellers:[],ocr_rate:0,amount_rate:0});
+    const loadDash=()=>{
+      dash.total_count=invoices.length;
+      dash.total_amount=invoices.reduce((a,x)=>a+x.amount_total,0).toFixed(2);
+      const unused=invoices.filter(x=>x.status==='unused');
+      dash.unused_count=unused.length;
+      dash.unused_amount=unused.reduce((a,x)=>a+x.amount_total,0).toFixed(2);
+      // 近6月趋势
+      const months=[];
+      for(let i=5;i>=0;i--){
+        const d=new Date(2024,9-i,1);
+        const key=`${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+        const mr=invoices.filter(x=>x.invoice_date.startsWith(key));
+        months.push({month:key,count:mr.length,amount:mr.reduce((a,x)=>a+x.amount_total,0).toFixed(0)});
+      }
+      dash.monthly=months;
+      // TOP5
+      const g={};
+      invoices.forEach(x=>{g[x.seller_name]=g[x.seller_name]||{name:x.seller_name,count:0,amount:0};
+        g[x.seller_name].count++;g[x.seller_name].amount+=x.amount_total;});
+      dash.top_sellers=Object.values(g).sort((a,b)=>b.amount-a.amount).slice(0,5)
+        .map(x=>({name:x.name,count:x.count,amount:x.amount.toFixed(0)}));
+      dash.ocr_rate=97;
+      dash.amount_rate=100;
+    };
+    const barH=amt=>Math.max(2,Math.round((+amt||0)/Math.max(...dash.monthly.map(m=>+m.amount),1)*150))+'px';
+    const hsW=amt=>Math.max(4,Math.round((+amt||0)/Math.max(...dash.top_sellers.map(s=>+s.amount),1)*100))+'%';
+
+    /* ----- 列表筛选 ----- */
+    const opts=reactive({sellers:[...new Set(invoices.map(x=>x.seller_name))].sort(),
+      categories:[...new Set(invoices.map(x=>x.category))].sort()});
+    const flt=reactive({seller:'',category:'',status:'unused',keyword:''});
+    const filtered=computed(()=>invoices.filter(x=>
+      (!flt.seller||x.seller_name===flt.seller)&&
+      (!flt.category||x.category===flt.category)&&
+      (flt.status==='all'||x.status===flt.status)&&
+      (!flt.keyword||x.invoice_no.includes(flt.keyword)||x.seller_name.includes(flt.keyword))
+    ));
+    const matchedAmount=computed(()=>filtered.value.reduce((a,x)=>a+x.amount_total,0).toFixed(2));
+    const search=()=>{};
+    const markUsed=row=>{row.status='used';ElMessage.success('已标记为已使用');loadDash();loadGroups();};
+    const unmarkUsed=row=>{row.status='unused';ElMessage.success('已恢复为未使用');loadDash();loadGroups();};
+
+    /* ----- 归类 ----- */
+    const grp=reactive({dim:'sellers',data:[],active:[]});
+    const loadGroups=()=>{
+      const key=grp.dim==='sellers'?'seller_name':'category';
+      const g={};
+      invoices.forEach(x=>{const k=x[key];g[k]=g[k]||{name:k,count:0,amount_total:0,invoices:[]};
+        g[k].count++;g[k].amount_total+=x.amount_total;g[k].invoices.push(x);});
+      grp.data=Object.values(g).sort((a,b)=>b.amount_total-a.amount_total)
+        .map(x=>({...x,amount_total:x.amount_total.toFixed(2)}));
+    };
+
+    /* ----- 采集演示 ----- */
+    const sync=reactive({days:90,running:false,started:false,scanned:0,found:0,downloaded:0,skipped:0,log:''});
+    const startSync=()=>{
+      sync.running=true;sync.started=true;
+      sync.scanned=0;sync.found=0;sync.downloaded=0;sync.skipped=0;sync.log='';
+      const steps=[
+        {t:'<span class="t-info">[INFO]</span> 连接邮箱 imap.qq.com:993 (SSL)...',d:400},
+        {t:'<span class="t-ok">[OK]</span> IMAP 登录成功，账户 zhang***@qq.com',d:600},
+        {t:'<span class="t-info">[INFO]</span> 扫描最近 90 天邮件（UID 游标增量）...',d:500},
+      ];
+      let i=0;
+      const tick=()=>{
+        if(i<steps.length){sync.log+=steps[i].t+'\n';i++;setTimeout(tick,steps[i-1].d);return;}
+        // 模拟扫描
+        const total=120+Math.floor(rng()*80);
+        let s=0;
+        const scanItv=setInterval(()=>{
+          s+=Math.floor(rng()*15)+5;
+          if(s>=total){s=total;clearInterval(scanItv);afterScan();}
+          sync.scanned=s;
+          sync.log+=`<span class="t-info">[INFO]</span> 已扫描 ${s}/${total} 封邮件\n`;
+        },120);
+      };
+      const afterScan=()=>{
+        sync.found=18;
+        sync.log+=`<span class="t-ok">[OK]</span> 命中候选邮件 ${sync.found} 封（主题/发件人匹配）\n`;
+        let d=0;
+        const dlItv=setInterval(()=>{
+          d++;
+          if(d<=sync.found){
+            sync.downloaded=d;
+            const isDup=rng()<0.25;
+            if(isDup){sync.skipped++;sync.log+=`<span class="t-warn">[SKIP]</span> 发票_${d}.pdf — MD5 重复，跳过\n`;}
+            else sync.log+=`<span class="t-ok">[DL]</span> 发票_${d}.pdf — 下载完成\n`;
+          }
+          if(d>=sync.found){
+            clearInterval(dlItv);
+            sync.running=false;
+            sync.log+=`<span class="t-ok">[DONE]</span> 采集完成：扫描 ${sync.scanned} 封，下载 ${sync.downloaded} 张，跳过 ${sync.skipped} 张\n`;
+            ElMessage.success('采集完成');
+          }
+        },200);
+      };
+      tick();
+    };
+
+    /* ----- 识别演示 ----- */
+    const ocr=reactive({running:false,started:false,total:3,success:0,failed:0,current:'',log:''});
+    const startOcr=()=>{
+      ocr.running=true;ocr.started=true;
+      ocr.success=0;ocr.failed=0;ocr.log='';
+      const files=['发票_中石化_001.pdf','发票_滴滴_002.pdf','发票_京东_003.pdf'];
+      let i=0;
+      const next=()=>{
+        if(i>=files.length){
+          ocr.running=false;ocr.current='全部完成';
+          ocr.log+=`<span class="t-ok">[DONE]</span> 识别完成：成功 ${ocr.success} 张，失败 ${ocr.failed} 张\n`;
+          ElMessage.success('识别完成');return;
+        }
+        ocr.current=files[i];
+        ocr.log+=`<span class="t-info">[OCR]</span> 正在识别 ${files[i]}...\n`;
+        setTimeout(()=>{
+          const ok=rng()<0.9;
+          if(ok){ocr.success++;ocr.log+=`<span class="t-ok">[OK]</span> ${files[i]} — 抽取成功，发票号 2400000${i+1}\n`;}
+          else{ocr.failed++;ocr.log+=`<span class="t-warn">[FAIL]</span> ${files[i]} — JSON 解析异常，已标记待重试\n`;}
+          i++;setTimeout(next,800);
+        },1200);
+      };
+      next();
+    };
+
+    onMounted(()=>{loadDash();loadGroups();});
+    return{tab,dash,loadDash,barH,hsW,opts,flt,filtered,matchedAmount,search,markUsed,unmarkUsed,grp,loadGroups,sync,startSync,ocr,startOcr};
+  }
+});
+app.use(ElementPlus,{locale:ElementPlusLocaleZhCn});
+app.mount('#app');
+</script>
+</body>
+</html>
