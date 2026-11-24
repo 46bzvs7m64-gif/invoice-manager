@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🧾%3C/text%3E%3C/svg%3E">
-<title>发票管家 · 在线演示（大型会务票据管理）</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%231f2937'/%3E%3Crect x='3.5' y='3' width='9' height='10' fill='none' stroke='%23fff'/%3E%3C/svg%3E">
+<title>发票管家 · 会务票据管理</title>
 <link rel="stylesheet" href="https://unpkg.com/element-plus@2.7.6/dist/index.css">
 <script src="https://unpkg.com/vue@3.4.31/dist/vue.global.prod.js"></script>
 <script src="https://unpkg.com/element-plus@2.7.6/dist/index.full.min.js"></script>
@@ -122,6 +122,66 @@
     .topbar .sp{margin-left:0;width:100%}
     .topbar{padding:12px 14px}
   }
+
+  /* ==================== v2：空库形态 + 朴素后台观感 ==================== */
+  :root{
+    --navy:#1f2937; --navy2:#26303b; --line:#e3e6ea; --ink:#1f2933; --sub:#6b7280;
+    --brand:#2563eb; --red:#b42318; --green:#16794a; --amber:#a15c00;
+  }
+  body{background:#f2f3f5}
+  .sidebar{background:#1f2937!important;background-image:none!important}
+  .sb-logo{border-bottom:1px solid rgba(255,255,255,.08)!important;padding:16px!important}
+  .sb-logo b{font-size:15px!important;letter-spacing:0!important}
+  .sb-logo span{font-size:10.5px!important;opacity:.55!important}
+  .sb-nav{padding:8px 0!important}
+  .nav-item{border-radius:3px!important;margin:1px 8px!important;padding:8px 10px!important;font-size:12.5px!important}
+  .nav-item.on{background:rgba(255,255,255,.10)!important;box-shadow:none!important;color:#fff!important}
+  .sb-foot{font-size:10.5px!important;opacity:.5!important;padding:10px 16px 14px!important;line-height:1.6!important}
+  .topbar{background:#fff!important;border-bottom:1px solid var(--line)!important;box-shadow:none!important}
+  .page-title{font-size:16px!important;letter-spacing:0!important}
+  .page-sub{font-size:11.5px!important;color:var(--sub)!important}
+  .content{padding:14px 16px 28px!important}
+  .card{border-radius:5px!important;box-shadow:none!important;border:1px solid var(--line)!important}
+  .card h3{font-size:13.5px!important;font-weight:600!important}
+  .kpi{border-radius:5px!important;box-shadow:none!important;border:1px solid var(--line)!important;background:#fff!important}
+  .kpi.k-red,.kpi.k-green,.kpi.k-cyan,.kpi.k-amber{background:#fff!important;border-color:var(--line)!important}
+  .kpi .kl{font-size:11.5px!important;color:var(--sub)!important}
+  .kpi .kv{font-size:19px!important;letter-spacing:0!important}
+  .kpi .ks{font-size:10.5px!important;color:var(--sub)!important}
+  .roi-band{background:#fbfbf8!important;border:1px solid #e6e3da!important;border-radius:5px!important;
+    box-shadow:none!important;padding:12px 14px!important}
+  .roi-band .rb-title{font-size:12px!important}
+  .roi-m b{color:var(--ink)!important;font-size:15px!important}
+  .hs-bar{background:var(--brand)!important;background-image:none!important;border-radius:2px!important}
+  .hbar-fill{background:var(--brand)!important;background-image:none!important;border-radius:2px!important}
+  .hbar-fill.amber{background:var(--amber)!important;background-image:none!important}
+  .demo-note{background:#f8fafc!important;border:1px solid var(--line)!important;border-left:3px solid #94a3b8!important;
+    border-radius:4px!important;color:#475569!important;font-size:12px!important;line-height:1.7!important}
+  .demo-note a{color:var(--brand)!important}
+  .empty-hint{padding:30px 8px;text-align:center;color:var(--sub);font-size:12.5px;
+    background:#fafbfc;border:1px dashed #dfe3e8;border-radius:4px;margin-top:10px}
+  .empty-hint b{color:var(--ink)}
+  .el-button{border-radius:3px!important}
+  .el-tag{border-radius:3px!important}
+  .el-card,.el-drawer{border-radius:0!important}
+  .logbox{background:#f7f8fa!important;color:#374151!important;border:1px solid var(--line)!important;
+    border-radius:4px!important;font-size:11.5px!important}
+  .step{border-radius:4px!important;box-shadow:none!important;border:1px solid var(--line)!important;background:#fff!important}
+  .alert{border-radius:4px!important;box-shadow:none!important;background:#fff!important}
+  .alert.a-ok{background:#fafbfc!important}
+  .filter-box{background:#fff!important;border:1px solid var(--line)!important;border-radius:5px!important}
+  .stat-item{border-radius:4px!important;background:#fafbfc!important}
+
+  .kpi::before{display:none!important}
+  .empty-hint{border-style:solid!important;border-color:var(--line)!important;background:#fafbfc!important}
+  .logbox{border:1px solid var(--line)!important}
+
+  .logbox{height:auto!important;min-height:108px;max-height:240px}
+  .step{border-radius:4px!important;box-shadow:none!important;background:#fff!important}
+  .step .sn{width:auto!important;height:auto!important;border-radius:0!important;background:none!important;
+    color:var(--sub)!important;font-size:10.5px!important;font-weight:600!important;margin-right:4px}
+  .step b{font-size:12.5px!important}
+  .step span{font-size:11px!important;color:var(--sub)!important;line-height:1.55!important}
 </style>
 </head>
 <body>
@@ -130,23 +190,23 @@
   <!-- ============ 侧边导航 ============ -->
   <aside class="sidebar">
     <div class="sb-logo">
-      <div class="lg">🧾</div>
+      
       <div><b>发票管家</b><span>会务票据全生命周期管理</span></div>
     </div>
     <nav class="sb-nav">
-      <div class="nav-item" :class="{on:tab==='dash'}" @click="tab='dash'"><span class="ico">📊</span>经营仪表盘</div>
+      <div class="nav-item" :class="{on:tab==='dash'}" @click="tab='dash'">经营仪表盘</div>
       <div class="nav-item" :class="{on:tab==='list'}" @click="tab='list'">
-        <span class="ico">📄</span>发票管理
+        发票管理
         <el-badge :value="unusedN" :hidden="!unusedN" type="danger" style="margin-left:auto"></el-badge>
       </div>
-      <div class="nav-item" :class="{on:tab==='groups'}" @click="tab='groups'"><span class="ico">🗂️</span>归类视图</div>
-      <div class="nav-item" :class="{on:tab==='sync'}" @click="tab='sync'"><span class="ico">📥</span>发票采集</div>
+      <div class="nav-item" :class="{on:tab==='groups'}" @click="tab='groups'">归类视图</div>
+      <div class="nav-item" :class="{on:tab==='sync'}" @click="tab='sync'">发票采集</div>
       <div class="nav-item" :class="{on:tab==='ocr'}" @click="tab='ocr'">
-        <span class="ico">🤖</span>智能识别
+        智能识别
         <el-badge :value="pendingN" :hidden="!pendingN" type="warning" style="margin-left:auto"></el-badge>
       </div>
     </nav>
-    <div class="sb-foot">私有化部署 · 数据本机存储<br>FastAPI + Vue3 · 在线演示为模拟数据</div>
+    <div class="sb-foot">私有化部署 · 数据本机存储<br>FastAPI + Vue3 · 前端为纯静态壳</div>
   </aside>
 
   <!-- ============ 主区域 ============ -->
@@ -158,21 +218,20 @@
       </div>
       <div class="sp">
         <el-tag type="info" effect="plain">第十四届全国中外合作办学年会 · 专项票据</el-tag>
-        <el-tag type="success" effect="dark">● 在线演示（免安装）</el-tag>
+        <el-tag type="info" effect="plain">空库</el-tag>
       </div>
     </div>
 
     <div class="content">
       <div class="demo-note">
-        <b>演示说明：</b>本页为发票管家的<b>免后端在线演示</b>，内置年会筹办全周期模拟发票（2026 年 5–11 月，供应商涵盖会场酒店 / 车务 / 印刷物料 / 视听设备 / 餐饮茶歇 / 媒体摄影）。
-        仪表盘、合规预警、检索核销、Excel 报销单导出均可操作；真实系统为 FastAPI + Vue3 全栈应用（IMAP 自动采集 + 通义千问多模态识别），
-        <a href="https://github.com/46bzvs7m64-gif/invoice-manager" target="_blank" style="color:#1d4ed8;font-weight:600">查看完整源码 →</a>
+        <b>空库状态：</b>未预置任何发票数据，台账、图表、预警都从「暂无数据」开始；接入采集或手动导入后才会有记录。
+        完整后端见 <a href="https://github.com/46bzvs7m64-gif/invoice-manager" target="_blank">源码仓库</a>。
       </div>
 
       <!-- ========== 经营仪表盘 ========== -->
       <template v-if="tab==='dash'">
         <!-- 效率收益 -->
-        <div class="roi-band">
+        <div class="roi-band" v-if="invoices.length">
           <div class="rb-title">效率收益（系统上线前后测算）
             <span>口径：单张发票「下载附件 → 登记台账 → 核对查重」人工约 3 分钟；系统自动采集识别后仅需人工抽检复核约 20 秒</span>
           </div>
@@ -208,7 +267,8 @@
         <div class="grid2" style="margin-top:14px">
           <div class="card">
             <h3>近 6 个月发票金额趋势<span class="sub">按开票日期 · 堆叠：已报销 / 待报销（元）</span></h3>
-            <svg viewBox="0 0 560 230" style="width:100%;height:auto;margin-top:8px">
+            <div class="empty-hint" v-if="!invoices.length">暂无数据：导入发票后自动生成</div>
+            <svg v-else viewBox="0 0 560 230" style="width:100%;height:auto;margin-top:8px">
               <g v-for="(g,i) in yGrid" :key="'g'+i">
                 <line x1="44" :y1="22+150*(1-i/4)" x2="540" :y2="22+150*(1-i/4)" stroke="#eef2f7"/>
                 <text x="38" :y="22+150*(1-i/4)+3" fill="#94a3b8" font-size="9" text-anchor="end">{{ fmtAxis(g*maxM/4) }}</text>
@@ -226,7 +286,8 @@
           </div>
           <div class="card">
             <h3>发票类型构成<span class="sub">专票 / 普票张数占比</span></h3>
-            <div style="display:flex;align-items:center;gap:16px;margin-top:6px;flex-wrap:wrap">
+            <div class="empty-hint" v-if="!invoices.length">暂无数据：导入发票后自动生成</div>
+            <div v-else style="display:flex;align-items:center;gap:16px;margin-top:6px;flex-wrap:wrap">
               <svg viewBox="0 0 160 160" style="width:150px;flex:none">
                 <circle cx="80" cy="80" r="58" fill="none" stroke="#fef3c7" :stroke-width="18"
                         :stroke-dasharray="(specialN/invoices.length*364.5)+' 364.5'" transform="rotate(-90 80 80)"/>
@@ -248,6 +309,7 @@
         <div class="grid2" style="margin-top:0">
           <div class="card">
             <h3>消费类目 TOP（按价税合计）</h3>
+            <div class="empty-hint" v-if="!catBars.length">暂无数据</div>
             <div v-for="c in catBars" :key="c.name" class="hs-row">
               <span class="hs-name">{{ c.name }}</span>
               <div class="hs-track"><div class="hs-bar" :style="{width:(c.amount/catMax*100)+'%'}"></div></div>
@@ -256,6 +318,7 @@
           </div>
           <div class="card">
             <h3>开票供应商 TOP5<span class="sub">按金额</span></h3>
+            <div class="empty-hint" v-if="!topSellers.length">暂无数据</div>
             <div v-for="s in topSellers" :key="s.name" class="hs-row">
               <span class="hs-name" :title="s.name">{{ s.name }}</span>
               <div class="hs-track"><div class="hs-bar" :style="{width:(s.amount/sMax*100)+'%',background:'linear-gradient(90deg,#7dd3fc,#0284c7)'}"></div></div>
@@ -269,8 +332,8 @@
             <span class="right">大额阈值：单张价税合计 ≥ 10,000 元</span></h3>
           <div class="alert-grid">
             <div class="alert" :class="an.list.length?'':'a-ok'" v-for="an in alertCards" :key="an.key" @click="an.list.length && jumpAnomaly(an.key)">
-              <div class="at"><span>{{ an.label }}</span><span>{{ an.list.length?an.list.length+' 条':'账票相符' }}</span></div>
-              <div class="av" :style="{color:an.list.length?an.color:'var(--green)'}">{{ an.list.length?an.list.length:'✓' }}</div>
+              <div class="at"><span>{{ an.label }}</span><span>{{ an.list.length?an.list.length+' 条':(invoices.length?'账票相符':'暂无数据') }}</span></div>
+              <div class="av" :style="{color:an.list.length?an.color:(invoices.length?'var(--green)':'var(--sub)')}">{{ an.list.length?an.list.length:(invoices.length?'✓':'—') }}</div>
               <div style="font-size:10.5px;color:#94a3b8;margin-top:3px;line-height:1.5">{{ an.desc }}</div>
             </div>
           </div>
@@ -311,11 +374,11 @@
 
         <div class="card">
           <div class="toolbar">
-            <el-button type="primary" @click="exportCsv(false)">⬇ 导出报销单（Excel 可打开）</el-button>
-            <el-button type="success" plain @click="batchUse">批量标记已使用</el-button>
+            <el-button type="primary" @click="exportCsv(false)">导出报销单</el-button>
+            <el-button plain @click="batchUse">批量标记已使用</el-button>
             <el-checkbox v-model="markOnExport" style="margin-left:auto">导出并标记已使用（报销闭环）</el-checkbox>
           </div>
-          <el-table :data="filtered" size="small" stripe height="560" :row-class-name="rowClass"
+          <el-table :data="filtered" size="small" stripe :height="filtered.length?560:200" empty-text="暂无发票：先去「发票采集」导入" :row-class-name="rowClass"
             @selection-change="onSelect" @row-click="openDetail">
             <el-table-column type="selection" width="40" :selectable="r=>r.status==='unused'"></el-table-column>
             <el-table-column prop="date" label="开票日期" width="92"></el-table-column>
@@ -365,7 +428,8 @@
             </el-radio-group>
             <span style="color:#94a3b8;font-size:12px">共 {{ groups.length }} 个分组，组级金额自动合计 · 用于与供应商集中对账</span>
           </div>
-          <el-collapse v-model="grpActive">
+          <div class="empty-hint" v-if="!groups.length">暂无数据：导入发票后可按供应商 / 类目 / 月份自动归类</div>
+          <el-collapse v-model="grpActive" v-else>
             <el-collapse-item v-for="g in groups" :key="g.name" :name="g.name">
               <template #title>
                 <span class="group-title">
@@ -403,7 +467,8 @@
             <el-col :span="6"><el-statistic title="新增入库（张）" :value="syncStat.dl"></el-statistic></el-col>
             <el-col :span="6"><el-statistic title="MD5 去重跳过（张）" :value="syncStat.skip"></el-statistic></el-col>
           </el-row>
-          <pre class="logbox" v-html="syncLog"></pre>
+          <pre class="logbox" v-if="syncLog" v-html="syncLog"></pre>
+          <div class="empty-hint" v-else>尚未执行采集。点「一键采集」会尝试连接邮箱；当前部署没有后端，只会给出说明，不会伪造数据。</div>
           <div class="demo-note" style="margin-top:12px">真实系统三层漏斗：① 服务端 <code>SEARCH SINCE</code> 日期粗剪 → ② 主题/发件人匹配（发票/invoice 或供应商白名单）→ ③ 文件魔数校验（<code>%PDF-</code> / <code>PK</code>）并黑名单排除对账单、行程单；IMAP UID 做水位线游标 + 附件 MD5 哈希，跨邮件、跨渠道重复文件只入库一次。</div>
         </div>
       </template>
@@ -421,7 +486,8 @@
             <el-col :span="6"><el-statistic title="失败（张）" :value="ocrStat.fail"></el-statistic></el-col>
             <el-col :span="6"><el-statistic title="当前进度" :value="ocrStat.cur"></el-statistic></el-col>
           </el-row>
-          <pre class="logbox" v-html="ocrLog"></pre>
+          <pre class="logbox" v-if="ocrLog" v-html="ocrLog"></pre>
+          <div class="empty-hint" v-else>尚未执行识别。待识别 0 张时不会产生任何任务。</div>
           <div class="step-grid">
             <div class="step"><span class="sn">1</span><b>PDF → Base64</b><span>读取发票附件，直传百炼 OpenAI 兼容多模态接口，不落临时图床</span></div>
             <div class="step"><span class="sn">2</span><b>大模型结构化抽取</b><span>输出强约束 JSON：票号 / 日期 / 购销方与税号 / 不含税金额 / 税额 / 价税合计 / 类目</span></div>
@@ -467,82 +533,17 @@
 const { createApp, reactive, ref, computed } = Vue;
 const { ElMessage, ElMessageBox } = ElementPlus;
 
-/* =============== 基础字典（年会会务供应商） =============== */
-const BUYER = { name:"郑州西亚斯学院", tax:"12410100MB0X202618" };
-/* s:名称  c:类目  r:适用税率  sp:开专票倾向 */
-const SUP = [
-  {n:"郑州国际会展中心有限公司", c:"场地住宿", r:.06, sp:.9},
-  {n:"郑州绿地JW万豪酒店",       c:"场地住宿", r:.06, sp:.6},
-  {n:"河南中州国际饭店",         c:"场地住宿", r:.06, sp:0},
-  {n:"河南郑旅客运服务有限公司", c:"交通车务", r:.09, sp:0},
-  {n:"河南新华印务有限公司",     c:"物料印刷", r:.13, sp:1},
-  {n:"郑州华彩广告有限公司",     c:"物料印刷", r:.13, sp:.5},
-  {n:"河南声动视听科技有限公司", c:"设备租赁", r:.13, sp:.9},
-  {n:"郑州美盛餐饮管理有限公司", c:"餐饮茶歇", r:.06, sp:0},
-  {n:"河南云旅航空服务有限公司", c:"交通车务", r:.09, sp:0},
-  {n:"滴滴企业版（郑州）",       c:"交通车务", r:.09, sp:0},
-  {n:"京东商城·得力办公旗舰店",  c:"办公物资", r:.13, sp:1},
-  {n:"郑州映像文化传媒有限公司", c:"宣传媒体", r:.06, sp:.6},
-  {n:"郑州丹尼斯百货有限公司",   c:"物料礼品", r:.13, sp:.5},
-  {n:"中国联通郑州市分公司",     c:"通讯服务", r:.09, sp:1},
-  {n:"携程商旅·郑州东站服务点",  c:"交通车务", r:.09, sp:0},
-];
-/* 确定性伪随机 */
-let seed=20261011;
-function rnd(){ seed=(seed*9301+49297)%233280; return seed/233280; }
+/* =============== 数据源 ===============
+   这里不再内置任何演示发票。真实部署时由后端 /api/invoices 提供，
+   未接入后端即为空库，所有页面走空状态。
+   ======================================= */
+const invoices = [];
+const BUYER = { name: "", tax: "" };
+/* 工具函数（原生成器遗留，界面与导出仍在用） */
 function r2(x){ return Math.round(x*100)/100; }
 function pad(n){ return String(n).padStart(2,"0"); }
-/* 日程：[月,日,供应商序号,价税合计,已使用(1/0),强制专票(1/0/-1),备注] */
-const PLAN = [
-  [5,12,6,6000,1,1],[5,18,4,3200,1,1],[5,25,10,860,1,1],[5,30,13,1200,1,1],
-  [6,8,5,2600,1,-1],[6,15,0,15000,1,1],[6,20,4,1800,1,-1],[6,24,11,3500,1,-1],[6,28,10,720,1,1],
-  [7,6,8,4200,1,-1],[7,15,3,3000,1,-1],[7,20,1,12000,1,1],[7,22,10,1450,1,1],[7,26,7,2500,1,-1],[7,29,9,640,1,-1],
-  [8,5,4,4600,1,1],[8,10,6,4800,1,1],[8,15,5,3200,1,-1],[8,20,12,5400,1,-1],[8,22,8,6800,1,-1],
-  [8,25,14,2100,1,-1],[8,28,9,980,1,-1],[8,30,10,760,1,1],
-  [9,5,1,35600,0,1],[9,8,0,28000,0,1],[9,10,3,8600,0,-1],[9,12,7,9800,0,-1],[9,15,6,12800,0,1],
-  [9,16,4,2400,0,1],[9,17,5,1800,0,-1],[9,18,9,1320,0,-1],[9,19,14,1560,0,-1],[9,20,8,5200,0,-1],
-  [9,22,11,4600,0,1],[9,24,2,7600,0,-1],[9,26,12,3200,0,-1],[9,28,7,1800,0,-1],
-  [10,8,5,900,0,-1],[10,9,13,800,0,1],[10,10,10,540,0,1],[10,10,6,0,0,-1],
-];
-const taxNo = (p,a)=> "9141010"+p+pad(Math.floor(a))+"MA"+(Math.floor(rnd()*900)+100)+"X";
-const invoices=[];
-let seq=1;
-PLAN.forEach(p=>{
-  if(p[3]===0) return;
-  const sup=SUP[p[2]];
-  const special = p[5]===1 ? true : p[5]===-1 ? false : rnd()<sup.sp;
-  const total=r2(p[3]);
-  const net=r2(total/(1+sup.r));
-  const inv={
-    id:seq,
-    no:"2442"+"0000"+"2026"+pad(p[0])+pad(p[1])+pad(seq).padStart(4,"0"),
-    date:`2026-${pad(p[0])}-${pad(p[1])}`,
-    seller:sup.n, sellerTax:taxNo("0",p[2]*7+3),
-    buyer:BUYER.name, buyerTax:BUYER.tax,
-    category:sup.c, special, total, net, tax:r2(total-net),
-    status:p[4]?"used":"unused",
-    batch:p[4]?(p[0]>=8?"年会第一批（9.20）":"年会预付款批（7.10）"):"",
-    ocr:"success",
-    file:`电子发票_${sup.n.slice(0,6)}_2026${pad(p[0])}${pad(p[1])}_${seq}.pdf`,
-  };
-  invoices.push(inv); seq++;
-});
-/* 异常注入 ① 重复发票号：印务 9.16 发票被供应商重发一次（同票号不同文件） */
-const dupSrc=invoices.find(x=>x.date==="2026-09-16");
-const dup=JSON.parse(JSON.stringify(dupSrc));
-dup.id=seq++; dup.date="2026-09-17"; dup.status="unused"; dup.batch=""; dup.file="电子发票_新华印务_重发件_"+dup.id+".pdf";
-invoices.push(dup);
-/* 异常注入 ② 未来日期票（11 月服务费提前录入/开票日期错误） */
-const fut=JSON.parse(JSON.stringify(invoices.find(x=>x.seller==="河南中州国际饭店" && x.date==="2026-09-24")));
-fut.id=seq++; fut.date="2026-11-08"; fut.no="2442000020261108"+pad(seq).padStart(4,"0"); fut.status="unused"; fut.batch="";
-fut.file="电子发票_中州国际_20261108_"+fut.id+".pdf";
-invoices.push(fut);
-/* 异常注入 ③ 专票缺税额（传媒结算票识别缺字段） */
-const miss=invoices.find(x=>x.seller==="郑州映像文化传媒有限公司" && x.date==="2026-09-22");
-miss.tax=null;
-/* 异常注入 ④ 2 张待识别（10 月新进邮件） */
-const pend=invoices.filter(x=>x.date>="2026-10-08");
-pend.slice(0,2).forEach((x,i)=>{ x.ocr="pending"; x.tax=i===0?null:x.tax; x.no="待识别-OCR-"+pad(x.id); });
+let _seed=1;
+function rnd(){ _seed=(_seed*9301+49297)%233280; return _seed/233280; }
 
 /* =============== 应用 =============== */
 createApp({
@@ -612,14 +613,15 @@ createApp({
     }));
     const unusedN=computed(()=>invoices.filter(x=>x.status==="unused").length);
     const sellerN=computed(()=>new Set(invoices.map(x=>x.seller)).size);
-    const usedRatio=computed(()=>Math.round(d.value.used/d.value.total*100));
+    const usedRatio=computed(()=>d.value.total?Math.round(d.value.used/d.value.total*100):0);
     const specialN=computed(()=>invoices.filter(x=>x.special).length);
     const pendingN=computed(()=>invoices.filter(x=>x.ocr!=="success").length);
     const doneN=computed(()=>invoices.filter(x=>x.ocr==="success").length);
-    const ocrRate=computed(()=>Math.round(doneN.value/invoices.length*100));
+    const ocrRate=computed(()=>invoices.length?Math.round(doneN.value/invoices.length*100):0);
     const roi=computed(()=>{
       const manualMin=invoices.length*3, sysMin=Math.round(invoices.length*20/60);
-      return {manualMin, manualMD:r2(manualMin/60/8), sysMin, savePct:Math.round((1-sysMin/manualMin)*100)};
+      const savePct=manualMin?Math.round((1-sysMin/manualMin)*100):0;
+      return {manualMin, manualMD:r2(manualMin/60/8), sysMin, savePct};
     });
     const monthly=computed(()=>{
       const out=[];
@@ -704,62 +706,37 @@ createApp({
     /* ----- 采集演示 ----- */
     const log=(box,html)=>{ box.value+=html+"\n"; };
     function runSync(){
-      syncRun.value=true; syncStart.value=true;
-      Object.assign(syncStat,{scan:0,hit:0,dl:0,skip:0}); syncLog.value="";
-      const L=syncLog;
-      log(L,'<span class="info">[INFO]</span> 连接年会专用邮箱 imap.qq.com:993（SSL）...');
-      setTimeout(()=>{ log(L,'<span class="ok">[OK]</span> IMAP 登录成功：meeting***@qq.com');
-        log(L,'<span class="info">[INFO]</span> UID 水位线：上次已同步至 UID 4821，本次只拉新邮件');
-        log(L,'<span class="info">[INFO]</span> 第一层漏斗：SEARCH SINCE 2026-07-13（近 '+syncDays.value+' 天）...');
-        let s=0; const total=96;
-        const itv=setInterval(()=>{ s+=7+Math.floor(rnd()*9); if(s>total)s=total; syncStat.scan=s;
-          if(s<total && s%28<10) log(L,'<span class="dim">  扫描 '+s+'/'+total+' 封 ...</span>');
-          if(s>=total){ clearInterval(itv); afterScan(); } },90);
-      },500);
-      function afterScan(){
-        log(L,'<span class="ok">[OK]</span> 第二层漏斗：主题/发件人匹配（发票/invoice/供应商白名单）命中 12 封');
-        syncStat.hit=12; let d=0;
-        const names=["国际会展中心","新华印务","声动视听","华彩广告","美盛餐饮","郑旅客运","云旅航空","丹尼斯","映像文化","联通郑州","得力办公","中州国际"];
-        const itv2=setInterval(()=>{
-          names[d] && log(L,(d%4===2?'<span class="warn">[SKIP]</span> ':'<span class="ok">[DL]</span> ')+'附件「'+names[d]+'_电子发票.pdf」'+(d%4===2?' — MD5 已存在，跳过':''));
-          if(d%4===2) syncStat.skip++; else syncStat.dl++;
-          d++;
-          if(d>=12){ clearInterval(itv2); syncRun.value=false;
-            log(L,'<span class="ok">[DONE]</span> 采集完成：扫描 '+syncStat.scan+' 封，新增入库 '+syncStat.dl+' 张，去重跳过 '+syncStat.skip+' 张，0 重复入库');
-            ElMessage.success("采集完成，新增 "+syncStat.dl+" 张"); }
-        },260);
-      }
+      syncStart.value = true; syncRun.value = false;
+      Object.assign(syncStat, {scan:0, hit:0, dl:0, skip:0});
+      syncLog.value = "";
+      const L = syncLog;
+      log(L, '<span class="info">[INFO]</span> 当前为静态部署，未配置 IMAP 邮箱凭据，采集通道未连接。');
+      log(L, '<span class="warn">[SKIP]</span> 未执行采集，也没有写入任何数据。');
+      log(L, '<span class="dim">  接好后端（FastAPI + imaplib）后，这里会按这个顺序输出：</span>');
+      log(L, '<span class="dim">  连接 SSL → SEARCH SINCE 日期粗筛 → 主题/发件人匹配 → 附件魔数校验 → MD5 去重 → 入库</span>');
+      ElMessage.warning("未连接邮箱服务，未采集到任何数据");
     }
 
     /* ----- 识别演示 ----- */
     function runOcr(){
-      const pendList=invoices.filter(x=>x.ocr!=="success");
-      ocrRun.value=true; ocrStart.value=true;
-      Object.assign(ocrStat,{total:pendList.length,ok:0,fail:0,cur:0}); ocrLog.value="";
-      const L=ocrLog; let i=0;
-      log(L,'<span class="info">[INFO]</span> 待识别 '+pendList.length+' 张，temperature=0，强约束 JSON 输出...');
-      const next=()=>{ if(i>=pendList.length){ ocrRun.value=false;
-          log(L,'<span class="ok">[DONE]</span> 识别完成：成功 '+ocrStat.ok+' 张，失败 '+ocrStat.fail+' 张，已写入待报销池');
-          ElMessage.success("识别完成"); return; }
-        const x=pendList[i]; ocrStat.cur=i+1;
-        log(L,'<span class="info">[OCR]</span> 识别中：'+x.file);
-        setTimeout(()=>{
-          if(x.tax==null){
-            ocrStat.fail++; x.ocr="failed";
-            log(L,'<span class="warn">[FAIL]</span> '+x.seller+'：税额字段缺失，已标记待人工复核/退回重开');
-          }else{
-            ocrStat.ok++; x.ocr="success"; x.no="24420000"+x.date.replaceAll("-","")+pad(x.id).padStart(4,"0");
-            log(L,'<span class="ok">[OK]</span> '+x.seller+'：价税 ¥'+fmt(x.total)+'，专票='+(x.special?"是":"否")+'，票号 '+x.no);
-          }
-          i++; setTimeout(next,650);
-        },900);
-      };
-      next();
+      ocrStart.value = true; ocrRun.value = false;
+      Object.assign(ocrStat, {total:0, ok:0, fail:0, cur:0});
+      ocrLog.value = "";
+      const L = ocrLog;
+      if (!pendingN.value) {
+        log(L, '<span class="dim">  库里没有待识别发票（0 张），无需识别。</span>');
+        ElMessage.info("没有待识别的发票");
+        return;
+      }
+      log(L, '<span class="info">[INFO]</span> 当前为静态部署，未配置模型服务（DASHSCOPE_API_KEY），识别通道未连接。');
+      log(L, '<span class="warn">[SKIP]</span> 待识别 ' + pendingN.value + ' 张，本次未调用模型，发票状态未变更。');
+      log(L, '<span class="dim">  接好后端后：PDF → Base64 → 多模态抽取 → 归一化 → 查重入库。</span>');
+      ElMessage.warning("未配置模型服务，未执行识别");
     }
 
     const pageTitle={dash:"经营仪表盘",list:"发票管理",groups:"归类视图",sync:"发票采集",ocr:"智能识别"};
     const ctxText=computed(()=>({
-      dash:"财税口径汇总 · 合规风控 · 报销进度一屏掌握",
+      dash:"票据台账 · 合规预警 · 报销进度",
       list:"多条件检索 · 核销 · 导出报销单",
       groups:"按供应商/类目聚合，支撑集中对账",
       sync:"IMAP 增量采集 · 三层漏斗 · MD5 去重",
