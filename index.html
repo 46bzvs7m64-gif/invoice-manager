@@ -333,7 +333,7 @@
           <div class="alert-grid">
             <div class="alert" :class="an.list.length?'':'a-ok'" v-for="an in alertCards" :key="an.key" @click="an.list.length && jumpAnomaly(an.key)">
               <div class="at"><span>{{ an.label }}</span><span>{{ an.list.length?an.list.length+' 条':(invoices.length?'账票相符':'暂无数据') }}</span></div>
-              <div class="av" :style="{color:an.list.length?an.color:(invoices.length?'var(--green)':'var(--sub)')}">{{ an.list.length?an.list.length:(invoices.length?'✓':'—') }}</div>
+              <div class="av" :style="{color:an.list.length?an.color:(invoices.length?'var(--green)':'var(--sub)')}">{{ an.list.length?an.list.length:(invoices.length?'✓':'0') }}</div>
               <div style="font-size:10.5px;color:#94a3b8;margin-top:3px;line-height:1.5">{{ an.desc }}</div>
             </div>
           </div>
